@@ -19,8 +19,17 @@
 (def pixels (.createImageData ctx w h))
 
 (def blockmap (make-array (* 64 64 64)))
-;; how is the texmap laid out
-(def texmap (make-array (* 16 16 3 16)))
+
+(defn gen-texmap []
+  (let [arr (array)]
+    (loop [i 0]
+      (if (< i (* 16 16 3 16))
+        (do
+          (.push arr 0)
+          (recur (inc i)))
+        arr))))
+
+(def texmap (gen-texmap))
 
 (defn random [n]
   (* (.random js/Math) n))
@@ -47,9 +56,13 @@
 
 (defn copy-texmap-into-pixels [texmap pixels]
   (forloop [(i 0) (< i (alength texmap)) (inc i)]
-    (let [n (aget texmap i)]
-      (when-not (zero? n)
-        (aset (.-data pixels) i n)))))
+    (let [n  (aget texmap i)
+          pi (* i 4)
+          data (.-data pixels)]
+      (aset data (+ pi 0) (bit-shift-right (bit-and n 0xFF000000) 24))
+      (aset data (+ pi 1) (bit-shift-right (bit-and n 0x00FF0000) 16))
+      (aset data (+ pi 2) (bit-shift-right (bit-and n 0x0000FF00) 8))
+      (aset data (+ pi 3) (bit-and n 0x000000FF)))))
 
 (defn non-zero [arr]
   (loop [i 0]
@@ -57,8 +70,7 @@
       (let [n (aget texmap i)]
         (if (and n (not (zero? n)))
           (array i n)
-          (recur (inc i))))
-      "WTF")))
+          (recur (inc i)))))))
 
 (declare clock)
 
@@ -88,13 +100,13 @@
               (reset! color 0xBC9862)
               (let [xd (Box. (- x 7))
                     yd (Box. (- (bit-and y 15) 7))]
-                (when (neg? xd)
+                (when (neg? @xd)
                   (reset! xd (- 1 @xd)))
                 (when (neg? yd)
                   (reset! yd (- 1 @yd)))
-                (when (> yd xd)
+                (when (> @yd @xd)
                   (reset! xd @yd))
-                (reset! br (- 196 (rand-int 32) (* (mod xd 3) 32)))))
+                (reset! br (- 196 (rand-int 32) (* (mod @xd 3) 32)))))
             (when (zero? (rand-int 2))
               (reset! br (/ (* @br (- 150 (* (bit-and x 1) 100))) 100))))
           (when (== i 5)
