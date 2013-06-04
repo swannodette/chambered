@@ -1,5 +1,5 @@
-(ns minecraft-cljs.core
-  (:use-macros [minecraft-cljs.macros :only [forloop]]))
+(ns chambered.core
+  (:use-macros [chambered.macros :only [forloop]]))
 
 (def ctx (.getContext (.getElementById js/document "game") "2d"))
 (def pixels (.createImageData ctx w h))

@@ -1,4 +1,4 @@
-(ns minecraft-cljs.macros)
+(ns chambered.macros)
 
 (defmacro forloop [[init test step] body]
   `(loop [~@init]
