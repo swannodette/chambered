@@ -1,11 +1,11 @@
 (ns chambered.core
   (:use-macros [chambered.macros :only [forloop]]))
 
-(def ctx (.getContext (.getElementById js/document "game") "2d"))
-(def pixels (.createImageData ctx w h))
-
 (def w (* 212 2))
 (def h (* 210 2))
+
+(def ctx (.getContext (.getElementById js/document "game") "2d"))
+(def pixels (.createImageData ctx w h))
 
 (def map (make-array (* 64 64 64)))
 (def texmap (make-array (* 16 16 3 16)))
@@ -98,7 +98,8 @@
                             (.sqrt js/Math
                               (+ (* yd yd) (* zd zd))
                           0.8))))
-                (aset map i 0))))))))))
+                (aset map i 0))))))))
+  )
 
 (defn clock []
   (render-minecraft)

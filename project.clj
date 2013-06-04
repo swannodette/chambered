@@ -9,9 +9,9 @@
 
   :plugins [[lein-cljsbuild "0.3.2"]]
 
-  :cljsbuild {:build
-               [{:source-path ["src"]
-                 :id "chambered"
+  :cljsbuild {:builds
+               [{:id "chambered"
+                 :source-paths ["src"]
                  :compiler {:output-to "chambered.js"
                             :static-fns true
                             :pretty-print true}}]})
