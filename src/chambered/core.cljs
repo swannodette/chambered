@@ -17,7 +17,7 @@
 (def pixels (.createImageData ctx w h))
 
 (def blockmap (make-array (* 64 64 64)))
-;; still now sure about this layout
+;; how is the texmap laid out
 (def texmap (make-array (* 16 16 3 16)))
 
 (defn random [n]
