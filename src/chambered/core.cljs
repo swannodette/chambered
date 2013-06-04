@@ -7,7 +7,7 @@
 (def ctx (.getContext (.getElementById js/document "game") "2d"))
 (def pixels (.createImageData ctx w h))
 
-(def map (make-array (* 64 64 64)))
+(def blockmap (make-array (* 64 64 64)))
 (def texmap (make-array (* 16 16 3 16)))
 
 (defn random [n]
@@ -77,11 +77,10 @@
             (swap! brr #(/ % 2)))
           (let [c @color]
             (aset texmap (+ x (* y 16) (* i 256 3))
-              (bit-or (color-int c 16) (color-int c 8) (color-int c)))))))
+              (bit-or (color-int c brr 16)
+                (color-int c brr 8) (color-int brr c)))))))
 
     (js/setInterval clock (/ 1000 60))
-
-    (reset! pixels )
 
     #_(let [ctx ]
       (forloop [(x 0) (< x 64) (inc x)]
@@ -101,8 +100,13 @@
                 (aset map i 0))))))))
   )
 
+(declare render-minecraft)
+
 (defn clock []
   (render-minecraft)
   (.putImageData ctx pixels 0 0))
+
+(defn render-minecraft []
+  )
 
 (init)
