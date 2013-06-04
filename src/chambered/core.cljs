@@ -13,6 +13,8 @@
 (def w (* 212 2))
 (def h (* 210 2))
 
+(def dummy (array))
+
 (def ctx (.getContext (.getElementById js/document "game") "2d"))
 (def pixels (.createImageData ctx w h))
 
@@ -43,21 +45,34 @@
 
 ;; for figuring out what Notch was thinking
 
-(defn render-into [src dest ox oy w h]
-  (forloop [(x ox) (< x (+ ox w)) (inc x)]
-    (forloop [(y oy) (< y (+ oy h) (inc y))]
-      )))
+(defn copy-texmap-into-pixels [texmap pixels]
+  (forloop [(i 0) (< i (alength texmap)) (inc i)]
+    (let [n (aget texmap i)]
+      (when-not (zero? n)
+        (aset (.-data pixels) i n)))))
+
+(defn non-zero [arr]
+  (loop [i 0]
+    (if (< i (alength arr))
+      (let [n (aget texmap i)]
+        (if (and n (not (zero? n)))
+          (array i n)
+          (recur (inc i))))
+      "WTF")))
 
 (declare clock)
+
+(def counter 0)
 
 (defn init []
   (let [color (Box. nil)
         br    (Box. nil)
         brr   (Box. nil)]
     (forloop [(i 1) (< i 16) (inc i)]
-      (reset! color (- 255 (random-int 96)))
+      (reset! br (- 255 (random-int 96)))
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
         (forloop [(x 0) (< x 16) (inc x)]
+          (reset! color 0x966C4A)
           (when (== i 4)
             (reset! color 0x7F7F7F))
           (when (or (not (== i 4)) (zero? (random-int 3)))
@@ -92,7 +107,8 @@
           (reset! brr @br)
           (when (>= y 32)
             (reset! brr (/ @brr 2)))
-          (let [c @color]
+          (let [c @color
+                brr @brr]
             (aset texmap (+ x (* y 16) (* i 256 3))
               (bit-or (color-int c brr 16)
                 (color-int c brr 8) (color-int brr c)))))))
@@ -121,7 +137,10 @@
 
 (defn clock []
   (render-minecraft)
-  (.putImageData ctx texmap 0 0))
+  (copy-texmap-into-pixels texmap pixels)
+  (.putImageData ctx pixels 0 0)
+  (.log js/console "done!")
+  )
 
 (defn render-minecraft []
   )
