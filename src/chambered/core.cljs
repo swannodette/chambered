@@ -25,7 +25,7 @@
     (loop [i 0]
       (if (< i (* 16 16 3 16))
         (do
-          (.push arr 0)
+          (.push arr 0x000000FF)
           (recur (inc i)))
         arr))))
 
