@@ -55,16 +55,16 @@
 ;; for figuring out what Notch was thinking
 
 (defn red [n]
-  (bit-shift-right (bit-and n 0xFF000000) 24))
-
-(defn blue [n]
-  (bit-shift-right (bit-and n 0x00FF0000) 16))
+  (bit-and (bit-shift-right n 24) 0xFF))
 
 (defn green [n]
-  (bit-shift-right (bit-and n 0x0000FF00) 8))
+  (bit-and (bit-shift-right n 16) 0xFF))
+
+(defn blue [n]
+  (bit-and (bit-shift-right n 8) 0xFF))
 
 (defn alpha [n]
-  (bit-and n 0x000000FF))
+  (bit-and n 0xFF))
 
 #_(defn copy-texmap-into-pixels [texmap pixels]
   (forloop [(i 0) (< i (alength texmap)) (inc i)]
