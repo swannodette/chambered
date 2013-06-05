@@ -54,15 +54,46 @@
 
 ;; for figuring out what Notch was thinking
 
-(defn copy-texmap-into-pixels [texmap pixels]
+(defn red [n]
+  (bit-shift-right (bit-and n 0xFF000000) 24))
+
+(defn blue [n]
+  (bit-shift-right (bit-and n 0x00FF0000) 16))
+
+(defn green [n]
+  (bit-shift-right (bit-and n 0x0000FF00) 8))
+
+(defn alpha [n]
+  (bit-and n 0x000000FF))
+
+#_(defn copy-texmap-into-pixels [texmap pixels]
   (forloop [(i 0) (< i (alength texmap)) (inc i)]
     (let [n  (aget texmap i)
           pi (* i 4)
           data (.-data pixels)]
-      (aset data (+ pi 0) (bit-shift-right (bit-and n 0xFF000000) 24))
-      (aset data (+ pi 1) (bit-shift-right (bit-and n 0x00FF0000) 16))
-      (aset data (+ pi 2) (bit-shift-right (bit-and n 0x0000FF00) 8))
-      (aset data (+ pi 3) (bit-and n 0x000000FF)))))
+      (aset data (+ pi 0) (red n))
+      (aset data (+ pi 1) (blue n))
+      (aset data (+ pi 2) (green n))
+      (aset data (+ pi 3) (alpha n)))))
+
+(defn set-pixel [pixels x y c]
+  (let [width  (.-width pixels)
+        height (.-height pixels)
+        data   (.-data pixels)
+        pi     (* (+ x (* y width)) 4)]
+    (aset data (+ pi 0) (red c))
+    (aset data (+ pi 1) (blue c))
+    (aset data (+ pi 2) (green c))
+    (aset data (+ pi 3) (alpha c))))
+
+(defn copy-texmap-into-pixels [texmap pixels]
+  (let [counter (Box. 0)]
+    (forloop [(i 1) (< i 16) (inc i)]
+      (forloop [(y 0) (< y (* 16 3)) (inc y)]
+        (forloop [(x 0) (< x 16) (inc x)]
+          (let [c (aget texmap @counter)]
+            (set-pixel pixels x (+ y (* i 16 3)) c)
+            (reset! counter (inc @counter))))))))
 
 (defn non-zero [arr]
   (loop [i 0]
