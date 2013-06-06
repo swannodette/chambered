@@ -110,15 +110,15 @@
   (let [color (Box. nil)
         br    (Box. nil)
         brr   (Box. nil)]
-    (forloop [(i 1) (< i 4) (inc i)]
+    (forloop [(i 1) (< i 2) (inc i)]
       (reset! br (- 255 (random-int 96)))
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
         (forloop [(x 0) (< x 16) (inc x)]
           (reset! color 0x966C4A)
           ;; (when (== i 4)
           ;;   (reset! color 0x7F7F7F))
-          ;; (when (or (not (== i 4)) (zero? (random-int 3)))
-          ;;   (reset! br (- 255 (random-int 96))))
+          (when (or (not (== i 4)) (zero? (random-int 3)))
+            (reset! br (- 255 (random-int 96))))
           (when (== i 1)
             (when (< y (+ (bitop x) 18))
               (reset! color 0x6AAA40))
@@ -155,12 +155,13 @@
           ;;     (reset! color 0)
           ;;     (reset! brr 255)))
           (let [c   @color
-                brr @brr]
-            (aset texmap (+ x (* y 16) (* i 256 3))
-              (bit-or
-                (bit-or (color-int c brr 16)
-                  (color-int c brr 8))
-                (color-int brr c)))
+                brr @brr
+                rc (bit-or
+                     (bit-or (color-int c brr 16)
+                       (color-int c brr 8))
+                     (color-int brr c))]
+            (.log js/console c brr rc y)
+            (aset texmap (+ x (* y 16) (* i 256 3)) rc)
             ))))
 
     #(js/setInterval clock (/ 1000 60))
