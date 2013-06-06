@@ -2,6 +2,9 @@
   (:refer-clojure :exclude [reset!])
   (:use-macros [chambered.macros :only [forloop]]))
 
+;; =============================================================================
+;; Atoms have a lot dependencies so we use and extend box instead
+
 (extend-type Box
   IDeref
   (-deref [this]
@@ -10,14 +13,13 @@
 (defn reset! [box value]
   (set! (.-val box) value))
 
+;; =============================================================================
+;; Declarations
+
 (def w (* 212 2))
 (def h (* 210 2))
-
-(def dummy (array))
-
 (def ctx (.getContext (.getElementById js/document "game") "2d"))
 (def pixels (.createImageData ctx w h))
-
 (def blockmap (make-array (* 64 64 64)))
 
 (defn gen-texmap []
@@ -30,6 +32,9 @@
         arr))))
 
 (def texmap (gen-texmap))
+
+;; =============================================================================
+;; Utilities
 
 (defn random [n]
   (* (.random js/Math) n))
@@ -68,13 +73,16 @@
     (aset data (+ pi 2) (blue c))
     (aset data (+ pi 3) 0xFF)))
 
+;; for debugging textures
 (defn copy-texmap-into-pixels [texmap pixels]
   (let [counter (Box. 0)]
     (forloop [(i 0) (< i 16) (inc i)]
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
         (forloop [(x 0) (< x 16) (inc x)]
           (let [c (aget texmap @counter)]
-            (set-pixel pixels x (+ y (* i 16 3)) c)
+            (set-pixel pixels
+              (+ x (* (.floor js/Math (/ i 5)) 16))
+              (+ y (mod (* i 16 3) (* 16 3 5))) c)
             (reset! counter (inc @counter))))))))
 
 (declare clock)
