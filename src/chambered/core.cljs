@@ -85,7 +85,7 @@
   (let [color (Box. nil)
         br    (Box. nil)
         brr   (Box. nil)]
-    (forloop [(i 1) (< i 2) (inc i)]
+    (forloop [(i 1) (< i 16) (inc i)]
       (reset! br (- 255 (random-int 96)))
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
         (forloop [(x 0) (< x 16) (inc x)]
@@ -98,44 +98,43 @@
             (cond
               (< y (+ (bitop x) 18)) (reset! color 0x6AAA40)
               (< y (+ (bitop x) 19)) (reset! br (/ (* @br 2) 3))))
-          ;; (when (== i 7)
-          ;;   (reset! color 0x675231)
-          ;;   (when (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
-          ;;     (reset! color 0xBC9862)
-          ;;     (let [xd (Box. (- x 7))
-          ;;           yd (Box. (- (bit-and y 15) 7))]
-          ;;       (when (neg? @xd)
-          ;;         (reset! xd (- 1 @xd)))
-          ;;       (when (neg? yd)
-          ;;         (reset! yd (- 1 @yd)))
-          ;;       (when (> @yd @xd)
-          ;;         (reset! xd @yd))
-          ;;       (reset! br (- 196 (rand-int 32) (* (mod @xd 3) 32)))))
-          ;;   (when (zero? (rand-int 2))
-          ;;     (reset! br (/ (* @br (- 150 (* (bit-and x 1) 100))) 100))))
-          ;; (when (== i 5)
-          ;;   (reset! color 0xB53A15)
-          ;;   (when (or (zero? (+ x (mod (bit-shift-right y 2) 8)))
-          ;;             (zero? (mod y 4)))
-          ;;     (reset! color 0xBCAFA5)))
-          ;; (when (== i 9)
-          ;;   (reset! color 0x4040FF))
+          (when (== i 7)
+            (reset! color 0x675231)
+            (when (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
+              (reset! color 0xBC9862)
+              (let [xd (Box. (- x 7))
+                    yd (Box. (- (bit-and y 15) 7))]
+                (when (neg? @xd)
+                  (reset! xd (- 1 @xd)))
+                (when (neg? yd)
+                  (reset! yd (- 1 @yd)))
+                (when (> @yd @xd)
+                  (reset! xd @yd))
+                (reset! br (- 196 (rand-int 32) (* (mod @xd 3) 32)))))
+            (when (zero? (rand-int 2))
+              (reset! br (/ (* @br (- 150 (* (bit-and x 1) 100))) 100))))
+          (when (== i 5)
+            (reset! color 0xB53A15)
+            (when (or (zero? (+ x (mod (bit-shift-right y 2) 8)))
+                      (zero? (mod y 4)))
+              (reset! color 0xBCAFA5)))
+          (when (== i 9)
+            (reset! color 0x4040FF))
           (reset! brr @br)
           (when (>= y 32)
             (reset! brr (/ @brr 2)))
-          ;; (when (== i 8)
-          ;;   (reset! color 0x50D937)
-          ;;   (if (zero? (rand-int 2))
-          ;;     (reset! color 0)
-          ;;     (reset! brr 255)))
+          (when (== i 8)
+            (reset! color 0x50D937)
+            (if (zero? (rand-int 2))
+              (reset! color 0)
+              (reset! brr 255)))
           (let [c   @color
-                brr @brr
-                rc (bit-or
-                     (color-int c brr 16)
-                     (color-int c brr 8)
-                     (color-int c brr))]
-            (aset texmap (+ x (* y 16) (* i 256 3)) rc)
-            ))))
+                brr @brr]
+            (aset texmap (+ x (* y 16) (* i 256 3))
+              (bit-or
+                (color-int c brr 16)
+                (color-int c brr 8)
+                (color-int c brr)))))))
 
     #(js/setInterval clock (/ 1000 60))
 
