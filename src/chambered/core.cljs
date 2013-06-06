@@ -154,8 +154,8 @@
 
     ;; generate the block map
     (forloop [(x 0) (< x 64) (inc x)]
-      (forloop [(y 0) (< x 64) (inc x)]
-        (forloop [(z 0) (< x 64) (inc x)]
+      (forloop [(y 0) (< y 64) (inc y)]
+        (forloop [(z 0) (< z 64) (inc z)]
           (let [i (bit-or (bit-shift-left z 12) (bit-shift-left y 6) x)
                 yd (* (- y 32.5) 0.4)
                 zd (* (- z 32.5) 0.4)]
@@ -187,8 +187,8 @@
         ycos (.cos js/Math yrot)
         ysin (.sin js/Math yrot)
         xcos (.cos js/Math xrot)
-        ysin (.sin js/Math xrot)
-        ox   (+ 32.5 (* (/ (mod (.now js/Date 10000)) 10000) 64))
+        xsin (.sin js/Math xrot)
+        ox   (+ 32.5 (* (/ (mod (.now js/Date 10000) 10000)) 64))
         oy   32.5
         oz   32.5]
     (reset! f (inc @f))
@@ -197,7 +197,7 @@
         (forloop [(y 0) (< y h) (inc y)]
           (let [yd''  (/ (/ (- y h) 2) h)
                 zd''  1
-                zd''' (+ (* zd ycos) (* yd ysin))
+                zd''' (+ (* zd'' ycos) (* yd'' ysin))
                 yd'   (- (* yd'' ycos) (* zd'' ysin))
                 xd'   (+ (* xd''' xcos) (* zd''' xsin))
                 zd'   (- (* zd''' xcos) (* xd''' xsin))
@@ -210,15 +210,14 @@
                                  (== d 0) xd'
                                  (== d 1) yd'
                                  (== d 2) zd')
-                    ll (/ 1 (if (neg? dim-length) (negate dimlength) dimlength))
+                    ll (/ 1 (if (neg? dim-length) (- dim-length) dim-length))
                     xd (* xd' ll)
                     yd (* yd' ll)
                     zd (* zd' ll)
                     initial (cond
                               (== d 0) (- ox (bit-and ox 0))
                               (== d 1) (- oy (bit-and oy 0))
-                              (== d 2) (- oz (bit-and oz 0))
-                              :else )
+                              (== d 2) (- oz (bit-and oz 0)))
                     dist (* ll initial)
                     xp (cond-> (+ ox (* xd initial))
                          (and (== d 0) (neg? dim-length)) dec)
