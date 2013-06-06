@@ -25,7 +25,7 @@
     (loop [i 0]
       (if (< i (* 16 16 3 16))
         (do
-          (.push arr 0x000000FF)
+          (.push arr 0)
           (recur (inc i)))
         arr))))
 
@@ -44,26 +44,23 @@
   (bit-and (bit-shift-right (+ (* x x 3) (* x 81)) 2) 3))
 
 (defn color-int
-  ([n brr]
-    (color-int n brr 0))
-  ([n brr shift]
-    (-> n
+  ([color brr]
+    (color-int color brr 0))
+  ([color brr shift]
+    (-> color
       (bit-shift-right shift)
-      (bit-and 0xff) (* brr) (/ 255)
+      (bit-and 0xFF) (* brr) (/ 255)
       (bit-shift-left shift))))
 
 ;; for figuring out what Notch was thinking
 
 (defn red [n]
-  (bit-and (bit-shift-right n 24) 0xFF))
-
-(defn green [n]
   (bit-and (bit-shift-right n 16) 0xFF))
 
-(defn blue [n]
+(defn green [n]
   (bit-and (bit-shift-right n 8) 0xFF))
 
-(defn alpha [n]
+(defn blue [n]
   (bit-and n 0xFF))
 
 #_(defn copy-texmap-into-pixels [texmap pixels]
@@ -72,8 +69,8 @@
           pi (* i 4)
           data (.-data pixels)]
       (aset data (+ pi 0) (red n))
-      (aset data (+ pi 1) (blue n))
-      (aset data (+ pi 2) (green n))
+      (aset data (+ pi 1) (green n))
+      (aset data (+ pi 2) (blue n))
       (aset data (+ pi 3) (alpha n)))))
 
 (defn set-pixel [pixels x y c]
@@ -82,9 +79,9 @@
         data   (.-data pixels)
         pi     (* (+ x (* y width)) 4)]
     (aset data (+ pi 0) (red c))
-    (aset data (+ pi 1) (blue c))
-    (aset data (+ pi 2) (green c))
-    (aset data (+ pi 3) (alpha c))))
+    (aset data (+ pi 1) (green c))
+    (aset data (+ pi 2) (blue c))
+    (aset data (+ pi 3) 255)))
 
 (defn copy-texmap-into-pixels [texmap pixels]
   (let [counter (Box. 0)]
@@ -113,7 +110,7 @@
   (let [color (Box. nil)
         br    (Box. nil)
         brr   (Box. nil)]
-    (forloop [(i 1) (< i 16) (inc i)]
+    (forloop [(i 1) (< i 4) (inc i)]
       (reset! br (- 255 (random-int 96)))
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
         (forloop [(x 0) (< x 16) (inc x)]
@@ -122,11 +119,11 @@
           ;;   (reset! color 0x7F7F7F))
           ;; (when (or (not (== i 4)) (zero? (random-int 3)))
           ;;   (reset! br (- 255 (random-int 96))))
-          ;; (when (== i 1)
-          ;;   (when (< y (+ (bitop x) 18))
-          ;;     (reset! color 0x6AAA40))
-          ;;   (when (< y (+ (bitop x) 19))
-          ;;     (reset! br (/ (* @br 2) 3))))
+          (when (== i 1)
+            (when (< y (+ (bitop x) 18))
+              (reset! color 0x6AAA40))
+            (when (< y (+ (bitop x) 19))
+              (reset! br (/ (* @br 2) 3))))
           ;; (when (== i 7)
           ;;   (reset! color 0x675231)
           ;;   (when (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
@@ -150,13 +147,21 @@
           ;; (when (== i 9)
           ;;   (reset! color 0x4040FF))
           (reset! brr @br)
-          ;; (when (>= y 32)
-          ;;   (reset! brr (/ @brr 2)))
-          (let [c @color
+          (when (>= y 32)
+            (reset! brr (/ @brr 2)))
+          ;; (when (== i 8)
+          ;;   (reset! color 0x50D937)
+          ;;   (if (zero? (rand-int 2))
+          ;;     (reset! color 0)
+          ;;     (reset! brr 255)))
+          (let [c   @color
                 brr @brr]
             (aset texmap (+ x (* y 16) (* i 256 3))
-              (bit-or (color-int c brr 16)
-                (color-int c brr 8) (color-int brr c)))))))
+              (bit-or
+                (bit-or (color-int c brr 16)
+                  (color-int c brr 8))
+                (color-int brr c)))
+            ))))
 
     #(js/setInterval clock (/ 1000 60))
 
