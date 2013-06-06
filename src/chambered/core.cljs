@@ -118,7 +118,7 @@
                        yd (Box. (- (bit-and y 15) 7))]
                   (when (neg? @xd)
                     (reset! xd (- 1 @xd)))
-                  (when (neg? yd)
+                  (when (neg? @yd)
                     (reset! yd (- 1 @yd)))
                   (when (> @yd @xd)
                     (reset! xd @yd))
