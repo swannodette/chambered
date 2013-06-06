@@ -98,14 +98,17 @@
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
         (forloop [(x 0) (< x 16) (inc x)]
           (reset! color 0x966C4A)
-          ;; (when (== i 4)
-          ;;   (reset! color 0x7F7F7F))
+          ;; Stone
+          (when (== i 4)
+            (reset! color 0x7F7F7F))
           (when (or (not (== i 4)) (zero? (random-int 3)))
             (reset! br (- 255 (random-int 96))))
+          ;; Grass
           (when (== i 1)
             (cond
               (< y (+ (bitop x) 18)) (reset! color 0x6AAA40)
               (< y (+ (bitop x) 19)) (reset! br (/ (* @br 2) 3))))
+          ;; Tree trunk
           (when (== i 7)
             (reset! color 0x675231)
             (when (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
@@ -121,16 +124,19 @@
                 (reset! br (- 196 (rand-int 32) (* (mod @xd 3) 32)))))
             (when (zero? (rand-int 2))
               (reset! br (/ (* @br (- 150 (* (bit-and x 1) 100))) 100))))
+          ;; Brick
           (when (== i 5)
             (reset! color 0xB53A15)
             (when (or (zero? (+ x (mod (bit-shift-right y 2) 8)))
                       (zero? (mod y 4)))
               (reset! color 0xBCAFA5)))
+          ;; Water
           (when (== i 9)
             (reset! color 0x4040FF))
           (reset! brr @br)
           (when (>= y 32)
             (reset! brr (/ @brr 2)))
+          ;; Leaves
           (when (== i 8)
             (reset! color 0x50D937)
             (if (zero? (rand-int 2))
