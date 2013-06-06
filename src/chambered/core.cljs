@@ -90,6 +90,7 @@
 ;; Notch's clever texture generator, we use Boxes since we can't bash
 ;; on locals, data looks completely different! - David
 (defn init []
+  ;; Generate the textures
   (let [color (Box. nil)
         br    (Box. nil)
         brr   (Box. nil)]
@@ -151,37 +152,81 @@
                 (color-int c brr 8)
                 (color-int c brr)))))))
 
-    #(js/setInterval clock (/ 1000 60))
+    ;; generate the block map
+    (forloop [(x 0) (< x 64) (inc x)]
+      (forloop [(y 0) (< x 64) (inc x)]
+        (forloop [(z 0) (< x 64) (inc x)]
+          (let [i (bit-or (bit-shift-left z 12) (bit-shift-left y 6) x)
+                yd (* (- y 32.5) 0.4)
+                zd (* (- z 32.5) 0.4)]
+            (aset blockmap i (rand-int 16))
+            (when (> (.random js/Math)
+                     (- (.sqrt js/Math (.sqrt js/Math (+ (* yd yd) (* zd zd)))) 0.8))
+              (aset blockmap i 0))))))
 
-    #_(let [ctx ]
-      (forloop [(x 0) (< x 64) (inc x)]
-        (forloop [(y 0) (< x 64) (inc x)]
-          (forloop [(z 0) (< x 64) (inc x)]
-            (let [i (bit-or (bit-shift-left z 12)
-                            (bit-shift-left y 6)
-                            x)
-                  yd (* (- y 32.5) 0.4)
-                  zd (* (- z 32.5) 0.4)]
-              (aset map i (rand-int 16))
-              (when (> (.random js/Math)
-                       (- (.sqrt js/Math
-                            (.sqrt js/Math
-                              (+ (* yd yd) (* zd zd))
-                          0.8))))
-                (aset map i 0))))))))
-  )
+    ;; set the alpha channel on all pixels
+    
+    #(js/setInterval clock (/ 1000 60))))
 
 (declare render-minecraft)
 
 (defn clock []
-  (render-minecraft)
-  (copy-texmap-into-pixels texmap pixels)
+  ;;(render-minecraft)
+  ;;(copy-texmap-into-pixels texmap pixels)
   (.putImageData ctx pixels 0 0)
   (.log js/console "done!")
   )
 
+(def f (Box. 0))
+
 (defn render-minecraft []
-  )
+  (let [xrot (* (.sin js/Math
+                  (* (/ (mod (.now js/Date) 10000) 10000) (.PI js/Math) 2)) 0.4)
+        yrot (* (.cos js/Math
+                  (* (/ (mod (.now js/Date) 10000) 10000) (.PI js/Math) 2)) 0.4)
+        ycos (.cos js/Math yrot)
+        ysin (.sin js/Math yrot)
+        xcos (.cos js/Math xrot)
+        ysin (.sin js/Math xrot)
+        ox   (+ 32.5 (* (/ (mod (.now js/Date 10000)) 10000) 64))
+        oy   32.5
+        oz   32.5]
+    (reset! f (inc @f))
+    (forloop [(x 0) (< x w) (inc x)]
+      (let [xd''' (/ (/ (- x w) 2) h)]
+        (forloop [(y 0) (< y h) (inc y)]
+          (let [yd''  (/ (/ (- y h) 2) h)
+                zd''  1
+                zd''' (+ (* zd ycos) (* yd ysin))
+                yd'   (- (* yd'' ycos) (* zd'' ysin))
+                xd'   (+ (* xd''' xcos) (* zd''' xsin))
+                zd'   (- (* zd''' xcos) (* xd''' xsin))
+                col   0
+                br    255
+                ddist 0
+                closest 32]
+            (forloop [(d 0) (< d 3) (inc d)]
+              (let [dim-length (cond
+                                 (== d 0) xd'
+                                 (== d 1) yd'
+                                 (== d 2) zd')
+                    ll (/ 1 (if (neg? dim-length) (negate dimlength) dimlength))
+                    xd (* xd' ll)
+                    yd (* yd' ll)
+                    zd (* zd' ll)
+                    initial (cond
+                              (== d 0) (- ox (bit-and ox 0))
+                              (== d 1) (- oy (bit-and oy 0))
+                              (== d 2) (- oz (bit-and oz 0))
+                              :else )
+                    dist (* ll initial)
+                    xp (cond-> (+ ox (* xd initial))
+                         (and (== d 0) (neg? dim-length)) dec)
+                    yp (cond-> (+ oy (* yd initial))
+                         (and (== d 1) (neg? dim-length)) dec)
+                    zp (cond-> (+ oz (* zd initial))
+                         (and (== d 2) (neg? dim-length)) dec)]
+                ))))))))
 
 (init)
 (clock)
