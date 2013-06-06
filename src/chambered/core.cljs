@@ -88,7 +88,7 @@
 
 (defn copy-texmap-into-pixels [texmap pixels]
   (let [counter (Box. 0)]
-    (forloop [(i 1) (< i 16) (inc i)]
+    (forloop [(i 0) (< i 16) (inc i)]
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
         (forloop [(x 0) (< x 16) (inc x)]
           (let [c (aget texmap @counter)]
@@ -107,6 +107,8 @@
 
 (def counter 0)
 
+;; Notch's clever texture generator, we use Boxes since we can't bash
+;; on locals - David
 (defn init []
   (let [color (Box. nil)
         br    (Box. nil)
