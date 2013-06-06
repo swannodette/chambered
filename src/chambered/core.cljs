@@ -111,7 +111,7 @@
           ;; Tree trunk
           (when (== i 7)
             (reset! color 0x675231)
-            (when (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
+            (if (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
               (reset! color 0xBC9862)
               (let [xd (Box. (- x 7))
                     yd (Box. (- (bit-and y 15) 7))]
@@ -121,13 +121,13 @@
                   (reset! yd (- 1 @yd)))
                 (when (> @yd @xd)
                   (reset! xd @yd))
-                (reset! br (- 196 (rand-int 32) (* (mod @xd 3) 32)))))
-            (when (zero? (rand-int 2))
-              (reset! br (/ (* @br (- 150 (* (bit-and x 1) 100))) 100))))
+                (reset! br (- 196 (rand-int 32) (* (mod @xd 3) 32))))
+              (if (zero? (rand-int 2))
+                (reset! br (/ (* @br (- 150 (* (bit-and x 1) 100))) 100)))))
           ;; Brick
           (when (== i 5)
             (reset! color 0xB53A15)
-            (when (or (zero? (+ x (mod (bit-shift-right y 2) 8)))
+            (when (or (zero? (mod (+ x (* (bit-shift-right y 2) 4)) 8))
                       (zero? (mod y 4)))
               (reset! color 0xBCAFA5)))
           ;; Water
