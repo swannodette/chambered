@@ -105,7 +105,7 @@
 (def counter 0)
 
 ;; Notch's clever texture generator, we use Boxes since we can't bash
-;; on locals - David
+;; on locals, data looks completely different! - David
 (defn init []
   (let [color (Box. nil)
         br    (Box. nil)
@@ -120,10 +120,13 @@
           (when (or (not (== i 4)) (zero? (random-int 3)))
             (reset! br (- 255 (random-int 96))))
           (when (== i 1)
-            (when (< y (+ (bitop x) 18))
-              (reset! color 0x6AAA40))
-            (when (< y (+ (bitop x) 19))
-              (reset! br (/ (* @br 2) 3))))
+            (cond
+              (< y (+ (bitop x) 18))
+              (reset! color 0x6AAA40)
+
+              (< y (+ (bitop x) 19))
+              (do
+                (reset! br (/ (* @br 2) 3)))))
           ;; (when (== i 7)
           ;;   (reset! color 0x675231)
           ;;   (when (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
@@ -146,6 +149,7 @@
           ;;     (reset! color 0xBCAFA5)))
           ;; (when (== i 9)
           ;;   (reset! color 0x4040FF))
+          (.log js/console "br" @br)
           (reset! brr @br)
           (when (>= y 32)
             (reset! brr (/ @brr 2)))
