@@ -149,7 +149,6 @@
           ;;     (reset! color 0xBCAFA5)))
           ;; (when (== i 9)
           ;;   (reset! color 0x4040FF))
-          (.log js/console "br" @br)
           (reset! brr @br)
           (when (>= y 32)
             (reset! brr (/ @brr 2)))
@@ -164,7 +163,7 @@
                      (bit-or (color-int c brr 16)
                        (color-int c brr 8))
                      (color-int brr c))]
-            (.log js/console c brr rc y)
+            (.log js/console y c brr rc)
             (aset texmap (+ x (* y 16) (* i 256 3)) rc)
             ))))
 
