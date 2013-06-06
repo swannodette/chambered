@@ -201,10 +201,10 @@
                 yd'   (- (* yd'' ycos) (* zd'' ysin))
                 xd'   (+ (* xd''' xcos) (* zd''' xsin))
                 zd'   (- (* zd''' xcos) (* xd''' xsin))
-                col   0
-                br    255
-                ddist 0
-                closest 32]
+                col   (Box. 0)
+                br    (Box. 255)
+                ddist (Box. 0)
+                closest (Box. 32)]
             (forloop [(d 0) (< d 3) (inc d)]
               (let [dim-length (cond
                                  (== d 0) xd'
@@ -219,13 +219,34 @@
                               (== d 1) (- oy (bit-and oy 0))
                               (== d 2) (- oz (bit-and oz 0)))
                     dist (* ll initial)
-                    xp (cond-> (+ ox (* xd initial))
-                         (and (== d 0) (neg? dim-length)) dec)
-                    yp (cond-> (+ oy (* yd initial))
-                         (and (== d 1) (neg? dim-length)) dec)
-                    zp (cond-> (+ oz (* zd initial))
-                         (and (== d 2) (neg? dim-length)) dec)]
-                ))))))))
+                    xp (Box. (cond-> (+ ox (* xd initial))
+                               (and (== d 0) (neg? dim-length)) dec))
+                    yp (Box. (cond-> (+ oy (* yd initial))
+                               (and (== d 1) (neg? dim-length)) dec))
+                    zp (Box. (cond-> (+ oz (* zd initial))
+                               (and (== d 2) (neg? dim-length)) dec))]
+                (while (< @dist @closest)
+                  (let [tex (aget blockmap [(bit-or (bit-shift-left (bit-and @zp 63) 12)
+                                                    (bit-shift-left (bit-and @yp 63) 6)
+                                                    (bit-and @xp 63))])]
+                    (when (pos? tex)
+                      (let [u (if (== d 1)
+                                (bit-and (* @xp 16) 15)
+                                (bit-and (* (+ @xp @zp) 16) 15))
+                            v (if (== d 1)
+                                (cond-> (bit-and (* @zp 16) 15)
+                                  (neg? yd) (+ 32))
+                                (+ (bit-and (* @yp 16) 15) 16))
+                            cc (aget texmap (+ u (* v 16) (* tex 256 3)))]
+                        (when (pos? cc)
+                          (reset! col cc)
+                          (reset! ddist (- 255 (bit-or (* (/ dist 32) 155) 0)))
+                          (reset! br (* 255 (- 255 (/ (* (mod (+ d 2) 3) 50) 255))))
+                          (reset! closest dist))))
+                    (reset! xp (+ @xp xd))
+                    (reset! yp (+ @yp yd))
+                    (reset! zp (+ @zp zd))
+                    (reset! dist (+ @dist ll))))))))))))
 
 (init)
 (clock)
