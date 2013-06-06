@@ -112,16 +112,17 @@
           (when (== i 7)
             (reset! color 0x675231)
             (if (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
-              (reset! color 0xBC9862)
-              (let [xd (Box. (- x 7))
-                    yd (Box. (- (bit-and y 15) 7))]
-                (when (neg? @xd)
-                  (reset! xd (- 1 @xd)))
-                (when (neg? yd)
-                  (reset! yd (- 1 @yd)))
-                (when (> @yd @xd)
-                  (reset! xd @yd))
-                (reset! br (- 196 (rand-int 32) (* (mod @xd 3) 32))))
+              (do
+                (reset! color 0xBC9862)
+                (let [xd (Box. (- x 7))
+                       yd (Box. (- (bit-and y 15) 7))]
+                  (when (neg? @xd)
+                    (reset! xd (- 1 @xd)))
+                  (when (neg? yd)
+                    (reset! yd (- 1 @yd)))
+                  (when (> @yd @xd)
+                    (reset! xd @yd))
+                  (reset! br (- 196 (rand-int 32) (* (mod @xd 3) 32)))))
               (if (zero? (rand-int 2))
                 (reset! br (/ (* @br (- 150 (* (bit-and x 1) 100))) 100)))))
           ;; Brick
