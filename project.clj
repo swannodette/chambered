@@ -20,5 +20,4 @@
                 {:id "chambered"
                  :source-paths ["src"]
                  :compiler {:output-to "chambered.js"
-                            :optimizations :advanced
-                            :pretty-print false}}]})
+                            :optimizations :advanced}}]})
