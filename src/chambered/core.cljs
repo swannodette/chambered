@@ -160,7 +160,11 @@
         xsin (.sin js/Math xrot)
         ox   (+ 32.5 (* (/ (mod (.now js/Date 10000) 10000)) 64))
         oy   32.5
-        oz   32.5]
+        oz   32.5
+        col     (Box. nil)
+        br      (Box. nil)
+        ddist   (Box. nil)
+        closest (Box. nil)]
     (reset! f (inc @f))
     (forloop [(x 0) (< x w) (inc x)]
       (let [xd''' (/ (/ (- x w) 2) h)]
@@ -170,11 +174,11 @@
                 zd''' (+ (* zd'' ycos) (* yd'' ysin))
                 yd'   (- (* yd'' ycos) (* zd'' ysin))
                 xd'   (+ (* xd''' xcos) (* zd''' xsin))
-                zd'   (- (* zd''' xcos) (* xd''' xsin))
-                col   (Box. 0)
-                br    (Box. 255)
-                ddist (Box. 0)
-                closest (Box. 32)]
+                zd'   (- (* zd''' xcos) (* xd''' xsin))]
+            (reset! col 0)
+            (reset! br 255)
+            (reset! ddist 0)
+            (reset! closest 32)
             (forloop [(d 0) (< d 3) (inc d)]
               (let [dim-length (cond
                                  (== d 0) xd'
