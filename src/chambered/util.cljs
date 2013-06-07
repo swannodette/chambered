@@ -1,4 +1,17 @@
-(ns chambered.util)
+(ns chambered.util
+  (:refer-clojure :exclude [reset!])
+  (:use-macros [chambered.macros :only [forloop]]))
+
+;; =============================================================================
+;; Atoms have a lot dependencies so we use and extend box instead
+
+(extend-type Box
+  IDeref
+  (-deref [this]
+    (.-val this)))
+
+(defn reset! [box value]
+  (set! (.-val box) value))
 
 ;; for figuring out what Notch was thinking
 

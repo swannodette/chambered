@@ -16,8 +16,7 @@
                  :source-paths ["src"]
                  :compiler {:output-to "chambered.js"
                             :optimizations :simple
-                            :static-fns true
-                            :pretty-print true}}
+                            :static-fns true}}
                 {:id "chambered"
                  :source-paths ["src"]
                  :compiler {:output-to "chambered.js"

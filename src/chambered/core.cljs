@@ -1,17 +1,7 @@
 (ns chambered.core
   (:refer-clojure :exclude [reset!])
-  (:use-macros [chambered.macros :only [forloop]]))
-
-;; =============================================================================
-;; Atoms have a lot dependencies so we use and extend box instead
-
-(extend-type Box
-  IDeref
-  (-deref [this]
-    (.-val this)))
-
-(defn reset! [box value]
-  (set! (.-val box) value))
+  (:use-macros [chambered.macros :only [forloop]])
+  (:use [chambered.util :only [reset!]]))
 
 ;; =============================================================================
 ;; Declarations
@@ -144,8 +134,6 @@
   (render-minecraft)
   (.putImageData ctx pixels 0 0))
 
-(def f (Box. 0))
-
 (defn render-color [c br ddist shift]
   (/ (* (bit-and (bit-shift-right c shift) 0xFF) br ddist) (* 255 255)))
 
@@ -165,7 +153,6 @@
         br      (Box. nil)
         ddist   (Box. nil)
         closest (Box. nil)]
-    (reset! f (inc @f))
     (forloop [(x 0) (< x w) (inc x)]
       (let [xd''' (/ (/ (- x w) 2) h)]
         (forloop [(y 0) (< y h) (inc y)]
@@ -200,9 +187,9 @@
                     zp (Box. (cond-> (+ oz (* zd initial))
                                (and (== d 2) (neg? dim-length)) dec))]
                 (while (< @dist @closest)
-                  (let [tex (aget blockmap [(bit-or (bit-shift-left (bit-and @zp 63) 12)
-                                                    (bit-shift-left (bit-and @yp 63) 6)
-                                                    (bit-and @xp 63))])]
+                  (let [tex (aget blockmap (bit-or (bit-shift-left (bit-and @zp 63) 12)
+                                                   (bit-shift-left (bit-and @yp 63) 6)
+                                                   (bit-and @xp 63)))]
                     (when (pos? tex)
                       (let [u (if (== d 1)
                                 (bit-and (* @xp 16) 15)
