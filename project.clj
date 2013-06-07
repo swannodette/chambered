@@ -22,4 +22,4 @@
                  :source-paths ["src"]
                  :compiler {:output-to "chambered.js"
                             :optimizations :advanced
-                            :pretty-print true}}]})
+                            :pretty-print false}}]})

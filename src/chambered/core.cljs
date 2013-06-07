@@ -163,19 +163,14 @@
             (when (> (.random js/Math)
                      (- (.sqrt js/Math (.sqrt js/Math (+ (* yd yd) (* zd zd)))) 0.8))
               (aset blockmap i 0))))))
-
-    ;; set the alpha channel on all pixels
     
-    #(js/setInterval clock (/ 1000 60))))
+    (js/setInterval clock (/ 1000 60))))
 
 (declare render-minecraft)
 
 (defn clock []
-  ;;(render-minecraft)
-  ;;(copy-texmap-into-pixels texmap pixels)
-  (.putImageData ctx pixels 0 0)
-  (.log js/console "done!")
-  )
+  (render-minecraft)
+  (.putImageData ctx pixels 0 0))
 
 (def f (Box. 0))
 
@@ -263,4 +258,4 @@
               (aset data (+ p 2) b))))))))
 
 (init)
-(clock)
+
