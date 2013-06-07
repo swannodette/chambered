@@ -179,6 +179,9 @@
 
 (def f (Box. 0))
 
+(defn render-color [c br ddist shift]
+  (/ (* (bit-and (bit-shift-right c shift) 0xFF) br ddist) (* 255 255)))
+
 (defn render-minecraft []
   (let [xrot (* (.sin js/Math
                   (* (/ (mod (.now js/Date) 10000) 10000) (.PI js/Math) 2)) 0.4)
@@ -246,7 +249,18 @@
                     (reset! xp (+ @xp xd))
                     (reset! yp (+ @yp yd))
                     (reset! zp (+ @zp zd))
-                    (reset! dist (+ @dist ll))))))))))))
+                    (reset! dist (+ @dist ll))))))
+            (let [br    @br
+                  ddist @ddist
+                  col   @col
+                  r     (render-color col br ddist 16)
+                  g     (render-color col br ddist 8)
+                  b     (render-color col br ddist 0)
+                  data  (.-data pixels)
+                  p     (+ (* (+ x (* y w)) 4) 0)]
+              (aset data (+ p 0) r)
+              (aset data (+ p 1) g)
+              (aset data (+ p 2) b))))))))
 
 (init)
 (clock)
