@@ -6,6 +6,7 @@
 ;; =============================================================================
 ;; Declarations
 
+(def timer nil)
 (def w (* 212 2))
 (def h (* 210 2))
 (def ctx (.getContext (.getElementById js/document "game") "2d"))
@@ -129,13 +130,14 @@
     (forloop [(i 0) (< i w) (inc i)]
       (aset (.-data pixels) (+ (* i 4) 3) 255))
     
-    (js/setInterval clock (/ 1000 60))))
+    (set! timer (js/setInterval clock (/ 1000 60)))))
 
 (declare render-minecraft)
 
 (defn clock []
   (render-minecraft)
-  (.putImageData ctx pixels 0 0))
+  (.putImageData ctx pixels 0 0)
+  (js/clearInterval timer))
 
 (defn render-color [c br ddist shift]
   (/ (* (bit-and (bit-shift-right c shift) 0xFF) br ddist) (* 255 255)))
