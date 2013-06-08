@@ -158,11 +158,11 @@
         ox   (+ 32.5 (* ds 64))
         oy   32.5
         oz   32.5
-        col     (Box. nil)
-        br      (Box. nil)
-        ddist   (Box. nil)
-        dist    (Box. nil)
-        closest (Box. nil)]
+        col     nil
+        br      nil
+        ddist   nil
+        dist    nil
+        closest nil]
     (forloop [(x 0) (< x w) (inc x)]
       (let [xd''' (/ (- x (/ w 2)) h)]
         (forloop [(y 0) (< y h) (inc y)]
@@ -172,10 +172,10 @@
                 yd'   (- (* yd'' ycos) (* zd'' ysin))
                 xd'   (+ (* xd''' xcos) (* zd''' xsin))
                 zd'   (- (* zd''' xcos) (* xd''' xsin))]
-            (reset! col 0)
-            (reset! br 255)
-            (reset! ddist 0)
-            (reset! closest 32)
+            (js* "~{} = ~{};" col 0)
+            (js* "~{} = ~{};" br 255)
+            (js* "~{} = ~{};" ddist 0)
+            (js* "~{} = ~{};" closest 32)
             (forloop [(d 0) (< d 3) (inc d)]
               (let [dim-length (cond
                                  (== d 0) xd'
@@ -196,9 +196,9 @@
                     yp (if (and (== d 1) (neg? dim-length)) (dec yp) yp)
                     zp (+ oz (* zd initial))
                     zp (if (and (== d 2) (neg? dim-length)) (dec zp) zp)]
-                (reset! dist (* ll initial))
+                (js* "~{} = ~{}" dist (* ll initial))
                 (loop [xp xp yp yp zp zp]
-                  (if (< (.-val dist) (.-val closest))
+                  (if (< dist closest)
                     (let [tex (aget blockmap
                                 (bit-or
                                   (bit-shift-left (bit-and zp 63) 12)
@@ -215,16 +215,13 @@
                                cc (aget texmap (+ u (* v 16) (* tex 256 3)))
                                mexp (js-mod (+ d 2) 3)]
                           (when (pos? cc)
-                            (reset! col cc)
-                            (reset! ddist (- 255 (bit-or (* (/ (.-val dist) 32) 255) 0)))
-                            (reset! br (/ (* 255 (- 255 (* mexp 50))) 255))
-                            (reset! closest (.-val dist)))))
-                      (reset! dist (+ (.-val dist) ll))
+                            (js* "~{} = ~{};" col cc)
+                            (js* "~{} = ~{};" ddist (- 255 (bit-or (* (/ dist 32) 255) 0)))
+                            (js* "~{} = ~{};" br (/ (* 255 (- 255 (* mexp 50))) 255))
+                            (js* "~{} = ~{};" closest dist))))
+                      (js* "~{} = ~{};" dist (+ dist ll))
                       (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))
-            (let [br    (.-val br)
-                  ddist (.-val ddist)
-                  col   (.-val col)
-                  r     (/ (* (bit-and (bit-shift-right col 16) 0xFF) br ddist) (* 255 255)) 
+            (let [r     (/ (* (bit-and (bit-shift-right col 16) 0xFF) br ddist) (* 255 255)) 
                   g     (/ (* (bit-and (bit-shift-right col 8) 0xFF) br ddist) (* 255 255))
                   b     (/ (* (bit-and col 0xFF) br ddist) (* 255 255))
                   data  (.-data pixels)
