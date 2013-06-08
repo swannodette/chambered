@@ -71,7 +71,7 @@
           (when (== i 1)
             (cond
               (< y (+ (bitop x) 18)) (reset! color 0x6AAA40)
-              (< y (+ (bitop x) 19)) (reset! br (/ (* @br 2) 3))))
+              (< y (+ (bitop x) 19)) (reset! br (/ (* (.-val br) 2) 3))))
           ;; Tree trunk
           (when (== i 7)
             (reset! color 0x675231)
@@ -80,15 +80,15 @@
                 (reset! color 0xBC9862)
                 (let [xd (Box. (- x 7))
                        yd (Box. (- (bit-and y 15) 7))]
-                  (when (neg? @xd)
-                    (reset! xd (- 1 @xd)))
-                  (when (neg? @yd)
-                    (reset! yd (- 1 @yd)))
-                  (when (> @yd @xd)
-                    (reset! xd @yd))
-                  (reset! br (- 196 (rand-int 32) (* (mod @xd 3) 32)))))
+                  (when (neg? (.-val xd))
+                    (reset! xd (- 1 (.-val xd))))
+                  (when (neg? (.-val yd))
+                    (reset! yd (- 1 (.-val yd))))
+                  (when (> (.-val yd) (.-val xd))
+                    (reset! xd (.-val yd)))
+                  (reset! br (- 196 (rand-int 32) (* (mod (.-val xd) 3) 32)))))
               (if (zero? (rand-int 2))
-                (reset! br (/ (* @br (- 150 (* (bit-and x 1) 100))) 100)))))
+                (reset! br (/ (* (.-val br) (- 150 (* (bit-and x 1) 100))) 100)))))
           ;; Brick
           (when (== i 5)
             (reset! color 0xB53A15)
@@ -98,17 +98,17 @@
           ;; Water
           (when (== i 9)
             (reset! color 0x4040FF))
-          (reset! brr @br)
+          (reset! brr (.-val br))
           (when (>= y 32)
-            (reset! brr (/ @brr 2)))
+            (reset! brr (/ (.-val brr) 2)))
           ;; Leaves
           (when (== i 8)
             (reset! color 0x50D937)
             (if (zero? (rand-int 2))
               (reset! color 0)
               (reset! brr 255)))
-          (let [c   @color
-                brr @brr]
+          (let [c   (.-val color)
+                brr (.-val brr)]
             (aset texmap (+ x (* y 16) (* i 256 3))
               (bit-or
                 (color-int c brr 16)
@@ -130,14 +130,15 @@
     (forloop [(i 0) (< i (* w h)) (inc i)]
       (aset (.-data pixels) (+ (* i 4) 3) 255))
     
-    (set! timer (js/setInterval clock (/ 1000 60)))))
+    (set! timer (js/setInterval clock (/ 1000 100)))))
 
 (declare render-minecraft)
 
 (defn clock []
   (render-minecraft)
   (.putImageData ctx pixels 0 0)
-  #_(js/clearInterval timer))
+  ;;(js/clearInterval timer)
+  )
 
 (defn render-color [c br ddist shift]
   (/ (* (bit-and (bit-shift-right c shift) 0xFF) br ddist) (* 255 255)))
@@ -159,14 +160,11 @@
         br      (Box. nil)
         ddist   (Box. nil)
         closest (Box. nil)
-        dist    (Box. nil)
-        xp      (Box. nil)
-        yp      (Box. nil)
-        zp      (Box. nil)]
+        dist    (Box. nil)]
     (forloop [(x 0) (< x w) (inc x)]
-      (let [xd''' (/ (/ (- x w) 2) h)]
+      (let [xd''' (/ (- x (/ w 2)) h)]
         (forloop [(y 0) (< y h) (inc y)]
-          (let [yd''  (/ (/ (- y h) 2) h)
+          (let [yd''  (/ (- y (/ h 2)) h)
                 zd''  1
                 zd''' (+ (* zd'' ycos) (* yd'' ysin))
                 yd'   (- (* yd'' ycos) (* zd'' ysin))
@@ -189,50 +187,45 @@
                               (== d 0) (- ox (bit-or ox 0))
                               (== d 1) (- oy (bit-or oy 0))
                               (== d 2) (- oz (bit-or oz 0)))
-                    initial (if (pos? dim-length) (- 1 initial) initial)]
+                    initial (if (pos? dim-length) (- 1 initial) initial)
+                    xp (+ ox (* xd initial))
+                    xp (if (and (== d 0) (neg? dim-length)) (dec xp) xp)
+                    yp (+ oy (* yd initial))
+                    yp (if (and (== d 1) (neg? dim-length)) (dec yp) yp)
+                    zp (+ oz (* zd initial))
+                    zp (if (and (== d 2) (neg? dim-length)) (dec zp) zp)]
                 (reset! dist (* ll initial))
-                (reset! xp
-                  (cond-> (+ ox (* xd initial))
-                    (and (== d 0) (neg? dim-length)) dec))
-                (reset! yp
-                  (cond-> (+ oy (* yd initial))
-                    (and (== d 1) (neg? dim-length)) dec))
-                (reset! zp
-                  (cond-> (+ oz (* zd initial))
-                    (and (== d 2) (neg? dim-length)) dec))
-                ;(.log js/console "data:" @xp @yp @zp initial)
-                (while (< @dist @closest)
-                  (let [tex (aget blockmap (bit-or (bit-shift-left (bit-and @zp 63) 12)
-                                                   (bit-shift-left (bit-and @yp 63) 6)
-                                                   (bit-and @xp 63)))]
-                    (when (pos? tex)
-                      (let [u (if (== d 1)
-                                (bit-and (* @xp 16) 15)
-                                (bit-and (* (+ @xp @zp) 16) 15))
-                            v (if (== d 1)
-                                (cond-> (bit-and (* @zp 16) 15)
-                                  (neg? yd) (+ 32))
-                                (+ (bit-and (* @yp 16) 15) 16))
-                            cc (aget texmap (+ u (* v 16) (* tex 256 3)))]
-                        (when (pos? cc)
-                          (reset! col cc)
-                          (reset! ddist (- 255 (bit-or (* (/ @dist 32) 255) 0)))
-                          (reset! br (/ (* 255 (- 255 (* (mod (+ d 2) 3) 50))) 255))
-                          (reset! closest @dist))))
-                    (reset! xp (+ @xp xd))
-                    (reset! yp (+ @yp yd))
-                    (reset! zp (+ @zp zd))
-                    (reset! dist (+ @dist ll))))))
-            (let [br    @br
-                  ddist @ddist
-                  col   @col
+                (loop [xp xp yp yp zp zp]
+                  (if (< (.-val dist) (.-val closest))
+                    (let [tex (aget blockmap
+                                (bit-or
+                                  (bit-shift-left (bit-and zp 63) 12)
+                                  (bit-shift-left (bit-and yp 63) 6)
+                                  (bit-and xp 63)))]
+                      (when (pos? tex)
+                        (let [u (if (== d 1)
+                                  (bit-and (* xp 16) 15)
+                                  (bit-and (* (+ xp zp) 16) 15))
+                               v (if (== d 1)
+                                   (cond-> (bit-and (* zp 16) 15)
+                                     (neg? yd) (+ 32))
+                                   (+ (bit-and (* yp 16) 15) 16))
+                               cc (aget texmap (+ u (* v 16) (* tex 256 3)))]
+                          (when (pos? cc)
+                            (reset! col cc)
+                            (reset! ddist (- 255 (bit-or (* (/ (.-val dist) 32) 255) 0)))
+                            (reset! br (/ (* 255 (- 255 (* (mod (+ d 2) 3) 50))) 255))
+                            (reset! closest (.-val dist)))))
+                      (reset! dist (+ (.-val dist) ll))
+                      (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))
+            (let [br    (.-val br)
+                  ddist (.-val ddist)
+                  col   (.-val col)
                   r     (render-color col br ddist 16)
                   g     (render-color col br ddist 8)
                   b     (render-color col br ddist 0)
                   data  (.-data pixels)
-                  p     (+ (* (+ x (* y w)) 4) 0)]
-              ;(.log js/console "colors: " br ddist @dist col r g b)
-              ;(.log js/console "--------")
+                  p     (* (+ x (* y w)) 4)]
               (aset data (+ p 0) r)
               (aset data (+ p 1) g)
               (aset data (+ p 2) b))))))))
