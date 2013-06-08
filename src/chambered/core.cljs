@@ -86,14 +86,14 @@
                     (reset! yd (- 1 (.-val yd))))
                   (when (> (.-val yd) (.-val xd))
                     (reset! xd (.-val yd)))
-                  (reset! br (- 196 (rand-int 32) (* (mod (.-val xd) 3) 32)))))
+                  (reset! br (- 196 (rand-int 32) (* (js-mod (.-val xd) 3) 32)))))
               (if (zero? (rand-int 2))
                 (reset! br (/ (* (.-val br) (- 150 (* (bit-and x 1) 100))) 100)))))
           ;; Brick
           (when (== i 5)
             (reset! color 0xB53A15)
-            (when (or (zero? (mod (+ x (* (bit-shift-right y 2) 4)) 8))
-                      (zero? (mod y 4)))
+            (when (or (zero? (js-mod (+ x (* (bit-shift-right y 2) 4)) 8))
+                      (zero? (js-mod y 4)))
               (reset! color 0xBCAFA5)))
           ;; Water
           (when (== i 9)
@@ -140,20 +140,17 @@
   ;;(js/clearInterval timer)
   )
 
-(defn render-color [c br ddist shift]
-  (/ (* (bit-and (bit-shift-right c shift) 0xFF) br ddist) (* 255 255)))
-
 (defn render-minecraft []
   (let [xrot (+ (* (.sin js/Math
-                     (* (/ (mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
+                     (* (/ (js-mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
                 (/ js/Math.PI 2))
         yrot (* (.cos js/Math
-                  (* (/ (mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
+                  (* (/ (js-mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
         ycos (.cos js/Math yrot)
         ysin (.sin js/Math yrot)
         xcos (.cos js/Math xrot)
         xsin (.sin js/Math xrot)
-        ox   (+ 32.5 (* (/ (mod (.now js/Date) 10000) 10000) 64))
+        ox   (+ 32.5 (* (/ (js-mod (.now js/Date) 10000) 10000) 64))
         oy   32.5
         oz   32.5
         col     (Box. nil)
@@ -214,16 +211,16 @@
                           (when (pos? cc)
                             (reset! col cc)
                             (reset! ddist (- 255 (bit-or (* (/ (.-val dist) 32) 255) 0)))
-                            (reset! br (/ (* 255 (- 255 (* (mod (+ d 2) 3) 50))) 255))
+                            (reset! br (/ (* 255 (- 255 (* (js-mod (+ d 2) 3) 50))) 255))
                             (reset! closest (.-val dist)))))
                       (reset! dist (+ (.-val dist) ll))
                       (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))
             (let [br    (.-val br)
                   ddist (.-val ddist)
                   col   (.-val col)
-                  r     (render-color col br ddist 16)
-                  g     (render-color col br ddist 8)
-                  b     (render-color col br ddist 0)
+                  r     (/ (* (bit-and (bit-shift-right col 16) 0xFF) br ddist) (* 255 255)) 
+                  g     (/ (* (bit-and (bit-shift-right col 8) 0xFF) br ddist) (* 255 255))
+                  b     (/ (* (bit-and col 0xFF) br ddist) (* 255 255))
                   data  (.-data pixels)
                   p     (* (+ x (* y w)) 4)]
               (aset data (+ p 0) r)
