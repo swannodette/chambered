@@ -137,7 +137,7 @@
 (defn clock []
   (render-minecraft)
   (.putImageData ctx pixels 0 0)
-  (js/clearInterval timer))
+  #_(js/clearInterval timer))
 
 (defn render-color [c br ddist shift]
   (/ (* (bit-and (bit-shift-right c shift) 0xFF) br ddist) (* 255 255)))
@@ -163,9 +163,9 @@
         xp      (Box. nil)
         yp      (Box. nil)
         zp      (Box. nil)]
-    (forloop [(x 0) (< x 1) (inc x)]
+    (forloop [(x 0) (< x w) (inc x)]
       (let [xd''' (/ (/ (- x w) 2) h)]
-        (forloop [(y 0) (< y 1) (inc y)]
+        (forloop [(y 0) (< y h) (inc y)]
           (let [yd''  (/ (/ (- y h) 2) h)
                 zd''  1
                 zd''' (+ (* zd'' ycos) (* yd'' ysin))
@@ -186,9 +186,9 @@
                     yd (* yd' ll)
                     zd (* zd' ll)
                     initial (cond
-                              (== d 0) (- ox (bit-and ox 0))
-                              (== d 1) (- oy (bit-and oy 0))
-                              (== d 2) (- oz (bit-and oz 0)))
+                              (== d 0) (- ox (bit-or ox 0))
+                              (== d 1) (- oy (bit-or oy 0))
+                              (== d 2) (- oz (bit-or oz 0)))
                     initial (if (pos? dim-length) (- 1 initial) initial)]
                 (reset! dist (* ll initial))
                 (reset! xp
@@ -200,6 +200,7 @@
                 (reset! zp
                   (cond-> (+ oz (* zd initial))
                     (and (== d 2) (neg? dim-length)) dec))
+                ;(.log js/console "data:" @xp @yp @zp initial)
                 (while (< @dist @closest)
                   (let [tex (aget blockmap (bit-or (bit-shift-left (bit-and @zp 63) 12)
                                                    (bit-shift-left (bit-and @yp 63) 6)
@@ -215,7 +216,7 @@
                             cc (aget texmap (+ u (* v 16) (* tex 256 3)))]
                         (when (pos? cc)
                           (reset! col cc)
-                          (reset! ddist (- 255 (bit-or (* (/ @dist 32) 155) 0)))
+                          (reset! ddist (- 255 (bit-or (* (/ @dist 32) 255) 0)))
                           (reset! br (/ (* 255 (- 255 (* (mod (+ d 2) 3) 50))) 255))
                           (reset! closest @dist))))
                     (reset! xp (+ @xp xd))
@@ -230,7 +231,8 @@
                   b     (render-color col br ddist 0)
                   data  (.-data pixels)
                   p     (+ (* (+ x (* y w)) 4) 0)]
-              (.log js/console br ddist col r g b)
+              ;(.log js/console "colors: " br ddist @dist col r g b)
+              ;(.log js/console "--------")
               (aset data (+ p 0) r)
               (aset data (+ p 1) g)
               (aset data (+ p 2) b))))))))
