@@ -200,7 +200,7 @@
                                   (bit-shift-left (bit-and yp 63) 6)
                                   (bit-and xp 63)))]
 
-                      (if (pos? tex)
+                      (when (pos? tex)
                         (let [u (if (== d 1)
                                   (bit-and (* xp 16) 15)
                                   (bit-and (* (+ xp zp) 16) 15))
@@ -209,20 +209,13 @@
                                      (neg? yd) (+ 32))
                                    (+ (bit-and (* yp 16) 15) 16))
                                cc (aget texmap (+ u (* v 16) (* tex 256 3)))]
-                          (if (pos? cc)
-                            (do
-                              (reset! col cc)
-                              (reset! ddist (- 255 (bit-or (* (/ (.-val dist) 32) 255) 0)))
-                              (reset! br (/ (* 255 (- 255 (* (mod (+ d 2) 3) 50))) 255))
-                              (reset! dist (+ (.-val dist) ll))
-                              (reset! closest (.-val dist))
-                              (recur (+ xp xd) (+ yp yd) (+ zp zd)))
-                            (do
-                              (reset! dist (+ (.-val dist) ll))
-                              (recur (+ xp xd) (+ yp yd) (+ zp zd)))))
-                        (do
-                          (reset! dist (+ (.-val dist) ll))
-                          (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))))
+                          (when (pos? cc)
+                            (reset! col cc)
+                            (reset! ddist (- 255 (bit-or (* (/ (.-val dist) 32) 255) 0)))
+                            (reset! br (/ (* 255 (- 255 (* (mod (+ d 2) 3) 50))) 255))
+                            (reset! closest (.-val dist)))))
+                      (reset! dist (+ (.-val dist) ll))
+                      (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))
             (let [br    (.-val br)
                   ddist (.-val ddist)
                   col   (.-val col)
