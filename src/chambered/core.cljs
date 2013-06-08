@@ -142,22 +142,22 @@
 
 (defn render-minecraft []
   (let [xrot (+ (* (.sin js/Math
-                     (* (/ (js-mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
+                     (* (/ (mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
                 (/ js/Math.PI 2))
         yrot (* (.cos js/Math
-                  (* (/ (js-mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
+                  (* (/ (mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
         ycos (.cos js/Math yrot)
         ysin (.sin js/Math yrot)
         xcos (.cos js/Math xrot)
         xsin (.sin js/Math xrot)
-        ox   (+ 32.5 (* (/ (js-mod (.now js/Date) 10000) 10000) 64))
+        ox   (+ 32.5 (* (/ (mod (.now js/Date) 10000) 10000) 64))
         oy   32.5
         oz   32.5
         col     (Box. nil)
         br      (Box. nil)
         ddist   (Box. nil)
-        closest (Box. nil)
-        dist    (Box. nil)]
+        dist    (Box. nil)
+        closest (Box. nil)]
     (forloop [(x 0) (< x w) (inc x)]
       (let [xd''' (/ (- x (/ w 2)) h)]
         (forloop [(y 0) (< y h) (inc y)]
@@ -199,7 +199,8 @@
                                   (bit-shift-left (bit-and zp 63) 12)
                                   (bit-shift-left (bit-and yp 63) 6)
                                   (bit-and xp 63)))]
-                      (when (pos? tex)
+
+                      (if (pos? tex)
                         (let [u (if (== d 1)
                                   (bit-and (* xp 16) 15)
                                   (bit-and (* (+ xp zp) 16) 15))
@@ -208,13 +209,20 @@
                                      (neg? yd) (+ 32))
                                    (+ (bit-and (* yp 16) 15) 16))
                                cc (aget texmap (+ u (* v 16) (* tex 256 3)))]
-                          (when (pos? cc)
-                            (reset! col cc)
-                            (reset! ddist (- 255 (bit-or (* (/ (.-val dist) 32) 255) 0)))
-                            (reset! br (/ (* 255 (- 255 (* (js-mod (+ d 2) 3) 50))) 255))
-                            (reset! closest (.-val dist)))))
-                      (reset! dist (+ (.-val dist) ll))
-                      (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))
+                          (if (pos? cc)
+                            (do
+                              (reset! col cc)
+                              (reset! ddist (- 255 (bit-or (* (/ (.-val dist) 32) 255) 0)))
+                              (reset! br (/ (* 255 (- 255 (* (mod (+ d 2) 3) 50))) 255))
+                              (reset! dist (+ (.-val dist) ll))
+                              (reset! closest (.-val dist))
+                              (recur (+ xp xd) (+ yp yd) (+ zp zd)))
+                            (do
+                              (reset! dist (+ (.-val dist) ll))
+                              (recur (+ xp xd) (+ yp yd) (+ zp zd)))))
+                        (do
+                          (reset! dist (+ (.-val dist) ll))
+                          (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))))
             (let [br    (.-val br)
                   ddist (.-val ddist)
                   col   (.-val col)
