@@ -127,7 +127,7 @@
                      (- (.sqrt js/Math (.sqrt js/Math (+ (* yd yd) (* zd zd)))) 0.8))
               (aset blockmap i 0))))))
 
-    (forloop [(i 0) (< i w) (inc i)]
+    (forloop [(i 0) (< i (* w h)) (inc i)]
       (aset (.-data pixels) (+ (* i 4) 3) 255))
     
     (set! timer (js/setInterval clock (/ 1000 60)))))
@@ -163,9 +163,9 @@
         xp      (Box. nil)
         yp      (Box. nil)
         zp      (Box. nil)]
-    (forloop [(x 0) (< x w) (inc x)]
+    (forloop [(x 0) (< x 1) (inc x)]
       (let [xd''' (/ (/ (- x w) 2) h)]
-        (forloop [(y 0) (< y h) (inc y)]
+        (forloop [(y 0) (< y 1) (inc y)]
           (let [yd''  (/ (/ (- y h) 2) h)
                 zd''  1
                 zd''' (+ (* zd'' ycos) (* yd'' ysin))
@@ -216,7 +216,7 @@
                         (when (pos? cc)
                           (reset! col cc)
                           (reset! ddist (- 255 (bit-or (* (/ @dist 32) 155) 0)))
-                          (reset! br (* 255 (- 255 (/ (* (mod (+ d 2) 3) 50) 255))))
+                          (reset! br (/ (* 255 (- 255 (* (mod (+ d 2) 3) 50))) 255))
                           (reset! closest @dist))))
                     (reset! xp (+ @xp xd))
                     (reset! yp (+ @yp yd))
@@ -230,6 +230,7 @@
                   b     (render-color col br ddist 0)
                   data  (.-data pixels)
                   p     (+ (* (+ x (* y w)) 4) 0)]
+              (.log js/console br ddist col r g b)
               (aset data (+ p 0) r)
               (aset data (+ p 1) g)
               (aset data (+ p 2) b))))))))
