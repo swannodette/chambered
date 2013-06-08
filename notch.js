@@ -3,6 +3,7 @@ var pixels;
 
 var w = 212 * 2;
 var h = 120 * 2;
+var timer = null;
 
 var map = new Array(64 * 64 * 64);
 var texmap = new Array(16 * 16 * 3 * 16);
@@ -93,12 +94,15 @@ function init() {
         pixels.data[i * 4 + 3] = 255;
     }
 
-    setInterval(clock, 1000 / 100);
+    timer = setInterval(clock, 1000 / 100);
 };
 
 function clock() {
+    var s = new Date();
     renderMinecraft();
+    console.log((new Date)-s);
     ctx.putImageData(pixels, 0, 0);
+    //clearInterval(timer);
 };
 
 var f = 0;
@@ -141,11 +145,11 @@ function renderMinecraft() {
                     dimLength = _zd;
 
                 var ll = 1 / (dimLength < 0 ? -dimLength : dimLength);
-                var xd = (_xd) * ll;
-                var yd = (_yd) * ll;
-                var zd = (_zd) * ll;
+                var xd = _xd * ll;
+                var yd = _yd * ll;
+                var zd = _zd * ll;
 
-                var initial = ox - (ox | 0);
+              var initial = ox - (ox | 0);
                 if (d == 1)
                     initial = oy - (oy | 0);
                 if (d == 2)
@@ -167,6 +171,8 @@ function renderMinecraft() {
                     if (d == 2)
                         zp--;
                 }
+
+                //console.log("before data:", xp, yp, zp, initial, dimLength);
 
                 while (dist < closest) {
                     var tex = map[(zp & 63) << 12 | (yp & 63) << 6 | (xp & 63)];
@@ -194,11 +200,17 @@ function renderMinecraft() {
                     zp += zd;
                     dist += ll;
                 }
+
+                //console.log("after data:", xp, yp, zp, dist);
             }
 
             var r = ((col >> 16) & 0xff) * br * ddist / (255 * 255);
             var g = ((col >> 8) & 0xff) * br * ddist / (255 * 255);
             var b = ((col) & 0xff) * br * ddist / (255 * 255);// + (255 -
+
+            //console.log("ddist:", ddist);
+            //console.log("colors:", br, ddist, dist, col, r, g, b);
+            //console.log("-----");
 
             pixels.data[(x + y * w) * 4 + 0] = r;
             pixels.data[(x + y * w) * 4 + 1] = g;
