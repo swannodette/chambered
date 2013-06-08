@@ -1,7 +1,7 @@
 (ns chambered.core
   (:refer-clojure :exclude [reset!])
-  (:use-macros [chambered.macros :only [forloop]])
-  (:use [chambered.util :only [reset!]]))
+  (:use-macros [chambered.macros :only [forloop reset!]])
+  (:require [chambered.util]))
 
 ;; =============================================================================
 ;; Declarations
@@ -135,22 +135,27 @@
 (declare render-minecraft)
 
 (defn clock []
-  (render-minecraft)
-  (.putImageData ctx pixels 0 0)
-  ;;(js/clearInterval timer)
-  )
+  (let [s (js/Date.)]
+    (render-minecraft)
+    (.log js/console (- (js/Date.) s))
+    (.putImageData ctx pixels 0 0)
+    ;;(js/clearInterval timer)
+    ))
+
+(defn date-seed []
+  (/ (js-mod (.now js/Date) 10000) 10000))
 
 (defn render-minecraft []
-  (let [xrot (+ (* (.sin js/Math
-                     (* (/ (mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
-                (/ js/Math.PI 2))
-        yrot (* (.cos js/Math
-                  (* (/ (mod (.now js/Date) 10000) 10000) js/Math.PI 2)) 0.4)
+  (let [twopi  (* js/Math.PI 2)
+        halfpi (/ js/Math.PI 2)
+        ds     (date-seed)
+        xrot (+ (* (.sin js/Math (* ds twopi)) 0.4) halfpi)
+        yrot (* (.cos js/Math (* ds twopi)) 0.4)
         ycos (.cos js/Math yrot)
         ysin (.sin js/Math yrot)
         xcos (.cos js/Math xrot)
         xsin (.sin js/Math xrot)
-        ox   (+ 32.5 (* (/ (mod (.now js/Date) 10000) 10000) 64))
+        ox   (+ 32.5 (* ds 64))
         oy   32.5
         oz   32.5
         col     (Box. nil)
@@ -199,7 +204,6 @@
                                   (bit-shift-left (bit-and zp 63) 12)
                                   (bit-shift-left (bit-and yp 63) 6)
                                   (bit-and xp 63)))]
-
                       (when (pos? tex)
                         (let [u (if (== d 1)
                                   (bit-and (* xp 16) 15)
@@ -208,11 +212,12 @@
                                    (cond-> (bit-and (* zp 16) 15)
                                      (neg? yd) (+ 32))
                                    (+ (bit-and (* yp 16) 15) 16))
-                               cc (aget texmap (+ u (* v 16) (* tex 256 3)))]
+                               cc (aget texmap (+ u (* v 16) (* tex 256 3)))
+                               mexp (js-mod (+ d 2) 3)]
                           (when (pos? cc)
                             (reset! col cc)
                             (reset! ddist (- 255 (bit-or (* (/ (.-val dist) 32) 255) 0)))
-                            (reset! br (/ (* 255 (- 255 (* (mod (+ d 2) 3) 50))) 255))
+                            (reset! br (/ (* 255 (- 255 (* mexp 50))) 255))
                             (reset! closest (.-val dist)))))
                       (reset! dist (+ (.-val dist) ll))
                       (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))
