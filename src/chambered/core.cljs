@@ -132,106 +132,100 @@
     
     (set! timer (js/setInterval clock (/ 1000 100)))))
 
-(declare render-minecraft)
-
-(defn clock []
-  (let [s (js/Date.)]
-    (render-minecraft)
-    (.log js/console (- (js/Date.) s))
-    (.putImageData ctx pixels 0 0)
-    ;;(js/clearInterval timer)
-    ))
-
 (defn date-seed []
   (/ (js-mod (.now js/Date) 10000) 10000))
 
-(defn render-minecraft []
-  (let [twopi  (* js/Math.PI 2)
-        halfpi (/ js/Math.PI 2)
-        ds     (date-seed)
-        xrot (+ (* (.sin js/Math (* ds twopi)) 0.4) halfpi)
-        yrot (* (.cos js/Math (* ds twopi)) 0.4)
-        ycos (.cos js/Math yrot)
-        ysin (.sin js/Math yrot)
-        xcos (.cos js/Math xrot)
-        xsin (.sin js/Math xrot)
-        ox   (+ 32.5 (* ds 64))
-        oy   32.5
-        oz   32.5
-        col     (Box. nil)
-        br      (Box. nil)
-        ddist   (Box. nil)
-        dist    (Box. nil)
-        closest (Box. nil)]
-    (forloop [(x 0) (< x w) (inc x)]
-      (let [xd''' (/ (- x (/ w 2)) h)]
-        (forloop [(y 0) (< y h) (inc y)]
-          (let [yd''  (/ (- y (/ h 2)) h)
-                zd''  1
-                zd''' (+ (* zd'' ycos) (* yd'' ysin))
-                yd'   (- (* yd'' ycos) (* zd'' ysin))
-                xd'   (+ (* xd''' xcos) (* zd''' xsin))
-                zd'   (- (* zd''' xcos) (* xd''' xsin))]
-            (reset! col 0)
-            (reset! br 255)
-            (reset! ddist 0)
-            (reset! closest 32)
-            (forloop [(d 0) (< d 3) (inc d)]
-              (let [dim-length (cond
-                                 (== d 0) xd'
-                                 (== d 1) yd'
-                                 (== d 2) zd')
-                    ll (/ 1 (if (neg? dim-length) (- dim-length) dim-length))
-                    xd (* xd' ll)
-                    yd (* yd' ll)
-                    zd (* zd' ll)
-                    initial (cond
-                              (== d 0) (- ox (bit-or ox 0))
-                              (== d 1) (- oy (bit-or oy 0))
-                              (== d 2) (- oz (bit-or oz 0)))
-                    initial (if (pos? dim-length) (- 1 initial) initial)
-                    xp (+ ox (* xd initial))
-                    xp (if (and (== d 0) (neg? dim-length)) (dec xp) xp)
-                    yp (+ oy (* yd initial))
-                    yp (if (and (== d 1) (neg? dim-length)) (dec yp) yp)
-                    zp (+ oz (* zd initial))
-                    zp (if (and (== d 2) (neg? dim-length)) (dec zp) zp)]
-                (reset! dist (* ll initial))
-                (loop [xp xp yp yp zp zp]
-                  (if (< (.-val dist) (.-val closest))
-                    (let [tex (aget blockmap
-                                (bit-or
-                                  (bit-shift-left (bit-and zp 63) 12)
-                                  (bit-shift-left (bit-and yp 63) 6)
-                                  (bit-and xp 63)))]
-                      (when (pos? tex)
-                        (let [u (if (== d 1)
-                                  (bit-and (* xp 16) 15)
-                                  (bit-and (* (+ xp zp) 16) 15))
-                               v (if (== d 1)
-                                   (cond-> (bit-and (* zp 16) 15)
-                                     (neg? yd) (+ 32))
-                                   (+ (bit-and (* yp 16) 15) 16))
-                               cc (aget texmap (+ u (* v 16) (* tex 256 3)))
-                               mexp (js-mod (+ d 2) 3)]
-                          (when (pos? cc)
-                            (reset! col cc)
-                            (reset! ddist (- 255 (bit-or (* (/ (.-val dist) 32) 255) 0)))
-                            (reset! br (/ (* 255 (- 255 (* mexp 50))) 255))
-                            (reset! closest (.-val dist)))))
-                      (reset! dist (+ (.-val dist) ll))
-                      (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))
-            (let [br    (.-val br)
-                  ddist (.-val ddist)
-                  col   (.-val col)
-                  r     (/ (* (bit-and (bit-shift-right col 16) 0xFF) br ddist) (* 255 255)) 
-                  g     (/ (* (bit-and (bit-shift-right col 8) 0xFF) br ddist) (* 255 255))
-                  b     (/ (* (bit-and col 0xFF) br ddist) (* 255 255))
-                  data  (.-data pixels)
-                  p     (* (+ x (* y w)) 4)]
-              (aset data (+ p 0) r)
-              (aset data (+ p 1) g)
-              (aset data (+ p 2) b))))))))
+(deftype MinecraftSurface [^:mutable col ^:mutable br ^:mutable ddist
+                           ^:mutable dist ^:mutable closest]
+  Object
+  (render [_]
+    (let [twopi  (* js/Math.PI 2)
+          halfpi (/ js/Math.PI 2)
+          ds     (date-seed)
+          xrot (+ (* (.sin js/Math (* ds twopi)) 0.4) halfpi)
+          yrot (* (.cos js/Math (* ds twopi)) 0.4)
+          ycos (.cos js/Math yrot)
+          ysin (.sin js/Math yrot)
+          xcos (.cos js/Math xrot)
+          xsin (.sin js/Math xrot)
+          ox   (+ 32.5 (* ds 64))
+          oy   32.5
+          oz   32.5]
+      (forloop [(x 0) (< x w) (inc x)]
+        (let [xd''' (/ (- x (/ w 2)) h)]
+          (forloop [(y 0) (< y h) (inc y)]
+            (let [yd''  (/ (- y (/ h 2)) h)
+                  zd''  1
+                  zd''' (+ (* zd'' ycos) (* yd'' ysin))
+                  yd'   (- (* yd'' ycos) (* zd'' ysin))
+                  xd'   (+ (* xd''' xcos) (* zd''' xsin))
+                  zd'   (- (* zd''' xcos) (* xd''' xsin))]
+              (set! col 0)
+              (set! br 255)
+              (set! ddist 0)
+              (set! closest 32)
+              (forloop [(d 0) (< d 3) (inc d)]
+                (let [dim-length (cond
+                                   (== d 0) xd'
+                                   (== d 1) yd'
+                                   (== d 2) zd')
+                      ll (/ 1 (if (neg? dim-length) (- dim-length) dim-length))
+                      xd (* xd' ll)
+                      yd (* yd' ll)
+                      zd (* zd' ll)
+                      initial (cond
+                                (== d 0) (- ox (bit-or ox 0))
+                                (== d 1) (- oy (bit-or oy 0))
+                                (== d 2) (- oz (bit-or oz 0)))
+                      initial (if (pos? dim-length) (- 1 initial) initial)
+                      xp (+ ox (* xd initial))
+                      xp (if (and (== d 0) (neg? dim-length)) (dec xp) xp)
+                      yp (+ oy (* yd initial))
+                      yp (if (and (== d 1) (neg? dim-length)) (dec yp) yp)
+                      zp (+ oz (* zd initial))
+                      zp (if (and (== d 2) (neg? dim-length)) (dec zp) zp)]
+                  (set! dist (* ll initial))
+                  (loop [xp xp yp yp zp zp]
+                    (if (< dist closest)
+                      (let [tex (aget blockmap
+                                  (bit-or
+                                    (bit-shift-left (bit-and zp 63) 12)
+                                    (bit-shift-left (bit-and yp 63) 6)
+                                    (bit-and xp 63)))]
+                        (when (pos? tex)
+                          (let [u (if (== d 1)
+                                    (bit-and (* xp 16) 15)
+                                    (bit-and (* (+ xp zp) 16) 15))
+                                v (if (== d 1)
+                                    (cond-> (bit-and (* zp 16) 15)
+                                      (neg? yd) (+ 32))
+                                    (+ (bit-and (* yp 16) 15) 16))
+                                 cc (aget texmap (+ u (* v 16) (* tex 256 3)))
+                                 mexp (js-mod (+ d 2) 3)]
+                            (when (pos? cc)
+                              (set! col cc)
+                              (set! ddist (- 255 (bit-or (* (/ dist 32) 255) 0)))
+                              (set! br (/ (* 255 (- 255 (* mexp 50))) 255))
+                              (set! closest dist))))
+                        (set! dist (+ dist ll))
+                        (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))
+              (let [r     (/ (* (bit-and (bit-shift-right col 16) 0xFF) br ddist) (* 255 255)) 
+                    g     (/ (* (bit-and (bit-shift-right col 8) 0xFF) br ddist) (* 255 255))
+                    b     (/ (* (bit-and col 0xFF) br ddist) (* 255 255))
+                    data  (.-data pixels)
+                    p     (* (+ x (* y w)) 4)]
+                (aset data (+ p 0) r)
+                (aset data (+ p 1) g)
+                (aset data (+ p 2) b)))))))))
+
+(def surface (MinecraftSurface. nil nil nil nil nil))
+
+(defn clock []
+  (let [s (js/Date.)]
+    (.render surface)
+    (.putImageData ctx pixels 0 0)
+    ;;(js/clearInterval timer)
+    ))
 
 (init)
 
