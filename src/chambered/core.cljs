@@ -14,17 +14,7 @@
 (def ctx (.getContext (.getElementById js/document "game") "2d"))
 (def pixels (.createImageData ctx w h))
 (def blockmap (make-array (* 64 64 64)))
-
-(defn gen-texmap []
-  (let [arr (array)]
-    (loop [i 0]
-      (if (< i (* 16 16 3 16))
-        (do
-          (.push arr 0)
-          (recur (inc i)))
-        arr))))
-
-(def texmap (gen-texmap))
+(def texmap (make-array (* 16 16 3 16)))
 
 ;; =============================================================================
 ;; Utilities
