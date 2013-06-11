@@ -8,7 +8,7 @@
 
 (def timer nil)
 (def w (* 212 2))
-(def h (* 210 2))
+(def h (* 120 2))
 (def twopi (* js/Math.PI 2))
 (def halfpi (/ js/Math.PI 2))
 (def ctx (.getContext (.getElementById js/document "game") "2d"))
