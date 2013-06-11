@@ -9,3 +9,12 @@
 
 (defmacro reset! [x v]
   `(set! (.-val ~x) ~v))
+
+(defmacro local []
+  `(make-array 1))
+
+(defmacro >> [x v]
+  `(aset ~x 0 ~v))
+
+(defmacro << [x]
+  `(aget ~x 0))

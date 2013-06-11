@@ -1,6 +1,6 @@
 (ns chambered.core
   (:refer-clojure :exclude [reset!])
-  (:use-macros [chambered.macros :only [forloop reset!]])
+  (:use-macros [chambered.macros :only [forloop reset! << >> local]])
   (:require [chambered.util]))
 
 ;; =============================================================================
@@ -146,11 +146,11 @@
         ox   (+ 32.5 (* ds 64))
         oy   32.5
         oz   32.5
-        col     (make-array 1)
-        br      (make-array 1)
-        ddist   (make-array 1)
-        dist    (make-array 1)
-        closest (make-array 1)]
+        col     (local)
+        br      (local)
+        ddist   (local)
+        dist    (local)
+        closest (local)]
     (forloop [(x 0) (< x w) (inc x)]
       (let [xd''' (/ (- x (/ w 2)) h)]
         (forloop [(y 0) (< y h) (inc y)]
@@ -160,10 +160,10 @@
                 yd'   (- (* yd'' ycos) (* zd'' ysin))
                 xd'   (+ (* xd''' xcos) (* zd''' xsin))
                 zd'   (- (* zd''' xcos) (* xd''' xsin))]
-            (aset col 0 0)
-            (aset br 0 255)
-            (aset ddist 0 0)
-            (aset closest 0 32)
+            (>> col 0)
+            (>> br 255)
+            (>> ddist 0)
+            (>> closest 32)
             (forloop [(d 0) (< d 3) (inc d)]
               (let [dim-length (cond
                                  (== d 0) xd'
@@ -184,9 +184,9 @@
                     yp (if (and (== d 1) (neg? dim-length)) (dec yp) yp)
                     zp (+ oz (* zd initial))
                     zp (if (and (== d 2) (neg? dim-length)) (dec zp) zp)]
-                (aset dist 0 (* ll initial))
+                (>> dist (* ll initial))
                 (loop [xp xp yp yp zp zp]
-                  (if (< (aget dist 0) (aget closest 0))
+                  (if (< (<< dist) (<< closest))
                     (let [tex (aget blockmap
                                 (bit-or
                                   (bit-shift-left (bit-and zp 63) 12)
@@ -203,15 +203,15 @@
                                cc (aget texmap (+ u (* v 16) (* tex 256 3)))
                                mexp (js-mod (+ d 2) 3)]
                           (when (pos? cc)
-                            (aset col 0 cc)
-                            (aset ddist 0 (- 255 (bit-or (* (/ (aget dist 0) 32) 255) 0)))
-                            (aset br 0 (/ (* 255 (- 255 (* mexp 50))) 255))
-                            (aset closest 0 (aget dist 0)))))
-                      (aset dist 0 (+ (aget dist 0) ll))
+                            (>> col cc)
+                            (>> ddist (- 255 (bit-or (* (/ (<< dist) 32) 255) 0)))
+                            (>> br (/ (* 255 (- 255 (* mexp 50))) 255))
+                            (>> closest (<< dist)))))
+                      (>> dist (+ (<< dist) ll))
                       (recur (+ xp xd) (+ yp yd) (+ zp zd)))))))
-            (let [br    (aget br 0)
-                  ddist (aget ddist 0)
-                  col   (aget col 0)
+            (let [br    (<< br)
+                  ddist (<< ddist)
+                  col   (<< col)
                   r     (/ (* (bit-and (bit-shift-right col 16) 0xFF) br ddist) (* 255 255)) 
                   g     (/ (* (bit-and (bit-shift-right col 8) 0xFF) br ddist) (* 255 255))
                   b     (/ (* (bit-and col 0xFF) br ddist) (* 255 255))
