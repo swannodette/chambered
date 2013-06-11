@@ -9,6 +9,8 @@
 (def timer nil)
 (def w (* 212 2))
 (def h (* 210 2))
+(def twopi (* js/Math.PI 2))
+(def halfpi (/ js/Math.PI 2))
 (def ctx (.getContext (.getElementById js/document "game") "2d"))
 (def pixels (.createImageData ctx w h))
 (def blockmap (make-array (* 64 64 64)))
@@ -146,9 +148,7 @@
   (/ (js-mod (.now js/Date) 10000) 10000))
 
 (defn render-minecraft []
-  (let [twopi  (* js/Math.PI 2)
-        halfpi (/ js/Math.PI 2)
-        ds     (date-seed)
+  (let [ds   (date-seed)
         xrot (+ (* (.sin js/Math (* ds twopi)) 0.4) halfpi)
         yrot (* (.cos js/Math (* ds twopi)) 0.4)
         ycos (.cos js/Math yrot)
