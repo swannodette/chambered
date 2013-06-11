@@ -1,5 +1,4 @@
 (ns chambered.core
-  (:refer-clojure :exclude [reset!])
   (:use-macros [chambered.macros :only [forloop << >> local]])
   (:require [chambered.util]))
 

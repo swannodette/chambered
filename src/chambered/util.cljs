@@ -1,5 +1,4 @@
 (ns chambered.util
-  (:refer-clojure :exclude [reset!])
   (:use-macros [chambered.macros :only [forloop local >> <<]]))
 
 ;; for figuring out what Notch was thinking

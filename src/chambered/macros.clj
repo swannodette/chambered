@@ -1,5 +1,4 @@
-(ns chambered.macros
-  (:refer-clojure :exclude [reset!]))
+(ns chambered.macros)
 
 (defmacro forloop [[init test step] & body]
   `(loop [~@init]
