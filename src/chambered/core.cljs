@@ -139,10 +139,8 @@
 (defn clock []
   (let [s (js/Date.)]
     (render-minecraft)
-    ;;(.log js/console (- (js/Date.) s))
-    (.putImageData ctx pixels 0 0)
-    ;;(js/clearInterval timer)
-    ))
+    (.log js/console (- (js/Date.) s))
+    (.putImageData ctx pixels 0 0)))
 
 (defn date-seed []
   (/ (js-mod (.now js/Date) 10000) 10000))
