@@ -41,10 +41,7 @@
 
 (declare clock)
 
-;; Notch's clever texture generator, we use Boxes since we can't bash
-;; on locals, data looks completely different! - David
 (defn init []
-  ;; Generate the textures
   (let [color (local)
         br    (local)
         brr   (local)]
@@ -53,17 +50,14 @@
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
         (forloop [(x 0) (< x 16) (inc x)]
           (>> color 0x966C4A)
-          ;; Stone
           (when (== i 4)
             (>> color 0x7F7F7F))
           (when (or (not (== i 4)) (zero? (random-int 3)))
             (>> br (- 255 (random-int 96))))
-          ;; Grass
           (when (== i 1)
             (cond
               (< y (+ (bitop x) 18)) (>> color 0x6AAA40)
               (< y (+ (bitop x) 19)) (>> br (/ (* (<< br) 2) 3))))
-          ;; Tree trunk
           (when (== i 7)
             (>> color 0x675231)
             (if (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
@@ -80,19 +74,16 @@
                   (>> br (- 196 (rand-int 32) (* (js-mod (<< xd) 3) 32)))))
               (if (zero? (rand-int 2))
                 (>> br (/ (* (<< br) (- 150 (* (bit-and x 1) 100))) 100)))))
-          ;; Brick
           (when (== i 5)
             (>> color 0xB53A15)
             (when (or (zero? (js-mod (+ x (* (bit-shift-right y 2) 4)) 8))
                       (zero? (js-mod y 4)))
               (>> color 0xBCAFA5)))
-          ;; Water
           (when (== i 9)
             (>> color 0x4040FF))
           (>> brr (<< br))
           (when (>= y 32)
             (>> brr (/ (<< brr) 2)))
-          ;; Leaves
           (when (== i 8)
             (>> color 0x50D937)
             (if (zero? (rand-int 2))
@@ -106,7 +97,6 @@
                 (color-int c brr 8)
                 (color-int c brr)))))))
 
-    ;; generate the block map
     (forloop [(x 0) (< x 64) (inc x)]
       (forloop [(y 0) (< y 64) (inc y)]
         (forloop [(z 0) (< z 64) (inc z)]
@@ -193,12 +183,12 @@
                         (let [u (if (== d 1)
                                   (bit-and (* xp 16) 15)
                                   (bit-and (* (+ xp zp) 16) 15))
-                               v (if (== d 1)
-                                   (cond-> (bit-and (* zp 16) 15)
-                                     (neg? yd) (+ 32))
-                                   (+ (bit-and (* yp 16) 15) 16))
-                               cc (aget texmap (+ u (* v 16) (* tex 256 3)))
-                               mexp (js-mod (+ d 2) 3)]
+                              v (if (== d 1)
+                                  (cond-> (bit-and (* zp 16) 15)
+                                    (neg? yd) (+ 32))
+                                  (+ (bit-and (* yp 16) 15) 16))
+                              cc (aget texmap (+ u (* v 16) (* tex 256 3)))
+                              mexp (js-mod (+ d 2) 3)]
                           (when (pos? cc)
                             (>> col cc)
                             (>> ddist (- 255 (bit-or (* (/ (<< dist) 32) 255) 0)))
