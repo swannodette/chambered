@@ -3,18 +3,6 @@
   (:require [chambered.util]))
 
 ;; =============================================================================
-;; Declarations
-
-(def w (* 212 2))
-(def h (* 120 2))
-(def twopi (* js/Math.PI 2))
-(def halfpi (/ js/Math.PI 2))
-(def ctx (.getContext (.getElementById js/document "game") "2d"))
-(def pixels (.createImageData ctx w h))
-(def blockmap (make-array (* 64 64 64)))
-(def texmap (make-array (* 16 16 3 16)))
-
-;; =============================================================================
 ;; Utilities
 
 (defn random [n]
@@ -38,12 +26,14 @@
       (bit-and 0xFF) (* brr) (/ 255)
       (bit-shift-left shift))))
 
-(declare clock)
+;; =============================================================================
+;; Procedural Texture & Block generation
 
-(defn init []
-  (let [color (local)
-        br    (local)
-        brr   (local)]
+(defn gen-texmap []
+  (let [texmap (make-array (* 16 16 3 16))
+        color  (local)
+        br     (local)
+        brr    (local)]
     (forloop [(i 1) (< i 16) (inc i)]
       (>> br (- 255 (random-int 96)))
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
@@ -76,7 +66,7 @@
           (when (== i 5)
             (>> color 0xB53A15)
             (when (or (zero? (js-mod (+ x (* (bit-shift-right y 2) 4)) 8))
-                      (zero? (js-mod y 4)))
+                    (zero? (js-mod y 4)))
               (>> color 0xBCAFA5)))
           (when (== i 9)
             (>> color 0x4040FF))
@@ -95,7 +85,10 @@
                 (color-int c brr 16)
                 (color-int c brr 8)
                 (color-int c brr)))))))
+    texmap))
 
+(defn gen-blockmap []
+  (let [blockmap (make-array (* 64 64 64))]
     (forloop [(x 0) (< x 64) (inc x)]
       (forloop [(y 0) (< y 64) (inc y)]
         (forloop [(z 0) (< z 64) (inc z)]
@@ -106,23 +99,33 @@
             (when (> (.random js/Math)
                      (- (.sqrt js/Math (.sqrt js/Math (+ (* yd yd) (* zd zd)))) 0.8))
               (aset blockmap i 0))))))
+    blockmap))
 
-    (forloop [(i 0) (< i (* w h)) (inc i)]
-      (aset (.-data pixels) (+ (* i 4) 3) 255))
-    
-    (js/setInterval clock (/ 1000 100))))
+;; =============================================================================
+;; Declarations
 
-(declare render-minecraft)
+(def w (* 212 2))
+(def h (* 120 2))
+(def twopi (* js/Math.PI 2))
+(def halfpi (/ js/Math.PI 2))
+(def ctx (.getContext (.getElementById js/document "game") "2d"))
+(def blockmap (gen-blockmap))
+(def texmap (gen-texmap))
+
+(declare render-minecraft!)
 
 (defn clock []
-  (render-minecraft)
-  (.putImageData ctx pixels 0 0))
+  (render-minecraft! ctx))
+
+(defn init []
+  (js/setInterval clock (/ 1000 100)))
 
 (defn date-seed []
   (/ (js-mod (.now js/Date) 10000) 10000))
 
-(defn render-minecraft []
-  (let [ds   (date-seed)
+(defn render-minecraft! [ctx]
+  (let [pixels (.createImageData ctx w h)
+        ds   (date-seed)
         xrot (+ (* (.sin js/Math (* ds twopi)) 0.4) halfpi)
         yrot (* (.cos js/Math (* ds twopi)) 0.4)
         ycos (.cos js/Math yrot)
@@ -137,6 +140,8 @@
         ddist   (local)
         dist    (local)
         closest (local)]
+    (forloop [(i 0) (< i (* w h)) (inc i)]
+      (aset (.-data pixels) (+ (* i 4) 3) 255))
     (forloop [(x 0) (< x w) (inc x)]
       (let [xd''' (/ (- x (/ w 2)) h)]
         (forloop [(y 0) (< y h) (inc y)]
@@ -205,7 +210,8 @@
                   p     (* (+ x (* y w)) 4)]
               (aset data (+ p 0) r)
               (aset data (+ p 1) g)
-              (aset data (+ p 2) b))))))))
+              (aset data (+ p 2) b))))))
+    (.putImageData ctx pixels 0 0)))
 
 (init)
 
