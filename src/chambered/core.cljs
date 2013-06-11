@@ -1,6 +1,6 @@
 (ns chambered.core
   (:refer-clojure :exclude [reset!])
-  (:use-macros [chambered.macros :only [forloop reset! << >> local]])
+  (:use-macros [chambered.macros :only [forloop << >> local]])
   (:require [chambered.util]))
 
 ;; =============================================================================
@@ -46,61 +46,61 @@
 ;; on locals, data looks completely different! - David
 (defn init []
   ;; Generate the textures
-  (let [color (Box. nil)
-        br    (Box. nil)
-        brr   (Box. nil)]
+  (let [color (local)
+        br    (local)
+        brr   (local)]
     (forloop [(i 1) (< i 16) (inc i)]
-      (reset! br (- 255 (random-int 96)))
+      (>> br (- 255 (random-int 96)))
       (forloop [(y 0) (< y (* 16 3)) (inc y)]
         (forloop [(x 0) (< x 16) (inc x)]
-          (reset! color 0x966C4A)
+          (>> color 0x966C4A)
           ;; Stone
           (when (== i 4)
-            (reset! color 0x7F7F7F))
+            (>> color 0x7F7F7F))
           (when (or (not (== i 4)) (zero? (random-int 3)))
-            (reset! br (- 255 (random-int 96))))
+            (>> br (- 255 (random-int 96))))
           ;; Grass
           (when (== i 1)
             (cond
-              (< y (+ (bitop x) 18)) (reset! color 0x6AAA40)
-              (< y (+ (bitop x) 19)) (reset! br (/ (* (.-val br) 2) 3))))
+              (< y (+ (bitop x) 18)) (>> color 0x6AAA40)
+              (< y (+ (bitop x) 19)) (>> br (/ (* (<< br) 2) 3))))
           ;; Tree trunk
           (when (== i 7)
-            (reset! color 0x675231)
+            (>> color 0x675231)
             (if (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
               (do
-                (reset! color 0xBC9862)
+                (>> color 0xBC9862)
                 (let [xd (Box. (- x 7))
                        yd (Box. (- (bit-and y 15) 7))]
-                  (when (neg? (.-val xd))
-                    (reset! xd (- 1 (.-val xd))))
-                  (when (neg? (.-val yd))
-                    (reset! yd (- 1 (.-val yd))))
-                  (when (> (.-val yd) (.-val xd))
-                    (reset! xd (.-val yd)))
-                  (reset! br (- 196 (rand-int 32) (* (js-mod (.-val xd) 3) 32)))))
+                  (when (neg? (<< xd))
+                    (>> xd (- 1 (<< xd))))
+                  (when (neg? (<< yd))
+                    (>> yd (- 1 (<< yd))))
+                  (when (> (<< yd) (<< xd))
+                    (>> xd (<< yd)))
+                  (>> br (- 196 (rand-int 32) (* (js-mod (<< xd) 3) 32)))))
               (if (zero? (rand-int 2))
-                (reset! br (/ (* (.-val br) (- 150 (* (bit-and x 1) 100))) 100)))))
+                (>> br (/ (* (<< br) (- 150 (* (bit-and x 1) 100))) 100)))))
           ;; Brick
           (when (== i 5)
-            (reset! color 0xB53A15)
+            (>> color 0xB53A15)
             (when (or (zero? (js-mod (+ x (* (bit-shift-right y 2) 4)) 8))
                       (zero? (js-mod y 4)))
-              (reset! color 0xBCAFA5)))
+              (>> color 0xBCAFA5)))
           ;; Water
           (when (== i 9)
-            (reset! color 0x4040FF))
-          (reset! brr (.-val br))
+            (>> color 0x4040FF))
+          (>> brr (<< br))
           (when (>= y 32)
-            (reset! brr (/ (.-val brr) 2)))
+            (>> brr (/ (<< brr) 2)))
           ;; Leaves
           (when (== i 8)
-            (reset! color 0x50D937)
+            (>> color 0x50D937)
             (if (zero? (rand-int 2))
-              (reset! color 0)
-              (reset! brr 255)))
-          (let [c   (.-val color)
-                brr (.-val brr)]
+              (>> color 0)
+              (>> brr 255)))
+          (let [c   (<< color)
+                brr (<< brr)]
             (aset texmap (+ x (* y 16) (* i 256 3))
               (bit-or
                 (color-int c brr 16)

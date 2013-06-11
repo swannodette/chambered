@@ -7,9 +7,6 @@
        ~@body
        (recur ~step))))
 
-(defmacro reset! [x v]
-  `(set! (.-val ~x) ~v))
-
 (defmacro local []
   `(make-array 1))
 
