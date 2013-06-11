@@ -6,7 +6,6 @@
 ;; =============================================================================
 ;; Declarations
 
-(def timer nil)
 (def w (* 212 2))
 (def h (* 120 2))
 (def twopi (* js/Math.PI 2))
@@ -70,8 +69,8 @@
             (if (and (in? x 0 15) (or (in? y 0 15) (in? y 32 47)))
               (do
                 (>> color 0xBC9862)
-                (let [xd (Box. (- x 7))
-                       yd (Box. (- (bit-and y 15) 7))]
+                (let [xd (local (- x 7))
+                      yd (local (- (bit-and y 15) 7))]
                   (when (neg? (<< xd))
                     (>> xd (- 1 (<< xd))))
                   (when (neg? (<< yd))
@@ -122,15 +121,13 @@
     (forloop [(i 0) (< i (* w h)) (inc i)]
       (aset (.-data pixels) (+ (* i 4) 3) 255))
     
-    (set! timer (js/setInterval clock (/ 1000 100)))))
+    (js/setInterval clock (/ 1000 100))))
 
 (declare render-minecraft)
 
 (defn clock []
-  (let [s (js/Date.)]
-    (render-minecraft)
-    (.log js/console (- (js/Date.) s))
-    (.putImageData ctx pixels 0 0)))
+  (render-minecraft)
+  (.putImageData ctx pixels 0 0))
 
 (defn date-seed []
   (/ (js-mod (.now js/Date) 10000) 10000))

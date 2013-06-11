@@ -7,8 +7,11 @@
        ~@body
        (recur ~step))))
 
-(defmacro local []
-  `(make-array 1))
+(defmacro local
+  ([]
+    `(make-array 1))
+  ([x]
+    `(cljs.core/array ~x)))
 
 (defmacro >> [x v]
   `(aset ~x 0 ~v))
